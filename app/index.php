@@ -678,8 +678,9 @@ async function startAnalysis(){
     }
     setProgress(8);
     const pageText=extractPageText(currentHtml);
-    log(`Seitentext extrahiert: ${(pageText.length/1024).toFixed(0)} KB (von ${(currentHtml.length/1024).toFixed(0)} KB HTML)`,'ok');
-    // Vollst\u00e4ndiger Text f\u00fcr Prompts (max. 80.000 Zeichen \u2248 20K Tokens)
+    const wordCount=pageText.split(/\s+/).filter(Boolean).length;
+    log(`Seitentext extrahiert: ${(pageText.length/1024).toFixed(0)} KB · ~${wordCount.toLocaleString('de-DE')} Wörter (von ${(currentHtml.length/1024).toFixed(0)} KB HTML)`,'ok');
+    // Vollständiger Text für Prompts (max. 80.000 Zeichen ≈ 20K Tokens)
     const htmlSnippet=pageText.substring(0,80000);
     const effectiveKeyword=keyword||'';
 
@@ -708,10 +709,11 @@ async function startAnalysis(){
 
     // Kontext-Blöcke bauen
     const ctx={
-      ctxBlock:    buildCtxBlock(effectiveKeyword,gscData),
+      ctxBlock:    buildCtxBlock(effectiveKeyword,gscData,wordCount,currentUrl),
       serpBlock:   buildSerpBlock(serpData,effectiveKeyword),
       backlinkBlock: buildBacklinkBlock(backlinkData),
       psiBlock:    buildPsiBlock(psiData),
+      schemaBlock: buildSchemaBlock(currentHtml),
     };
 
     log('Klassifiziere YMYL…');
@@ -771,10 +773,25 @@ async function fetchPageSpeedData(url){
 }
 
 // === KONTEXT-BLÖCKE ===
-function buildCtxBlock(keyword,gsc){
+function buildCtxBlock(keyword,gsc,wordCount,url){
   let b='';
   if(keyword)b+=`\nZiel-Keyword: ${keyword}`;
-  if(gsc?.keywords?.length){const top=gsc.keywords.slice(0,10);b+='\n\nGSC-Keyword-Performance (90 Tage):\n'+top.map(k=>`• ${k.query}: ${k.clicks} Klicks, ${k.impressions} Imp., CTR ${k.ctr}%, Pos. ${k.position}`).join('\n');}
+  if(wordCount)b+=`\nSeitentext-Umfang: ~${wordCount} Wörter`;
+  if(gsc?.keywords?.length){
+    const top=gsc.keywords.slice(0,10);
+    b+='\n\nGSC-Keyword-Performance (90 Tage):\n'+top.map(k=>`• ${k.query}: ${k.clicks} Klicks, ${k.impressions} Imp., CTR ${k.ctr}%, Pos. ${k.position}`).join('\n');
+    try{
+      const hostname=new URL(url).hostname.replace(/^www\./,'');
+      const brandPart=hostname.split('.')[0];
+      if(brandPart&&brandPart.length>2){
+        const branded=gsc.keywords.filter(k=>k.query.toLowerCase().includes(brandPart.toLowerCase()));
+        const totalClicks=gsc.keywords.reduce((s,k)=>s+k.clicks,0);
+        const brandedClicks=branded.reduce((s,k)=>s+k.clicks,0);
+        const ratio=totalClicks>0?Math.round(brandedClicks/totalClicks*100):0;
+        b+=`\n\nGSC-Branded-Queries: ${branded.length} von ${gsc.keywords.length} Keywords sind Brand-Anfragen (${ratio}% der Klicks). Brand: "${brandPart}".`;
+      }
+    }catch(e){}
+  }
   return b;
 }
 function buildSerpBlock(serp,keyword){
@@ -791,6 +808,29 @@ function buildBacklinkBlock(bl){
 function buildPsiBlock(psi){
   if(!psi?.success)return'';
   return`\n\nPageSpeed Mobile:\n• Score: ${psi.perf_score||'–'}/100\n• LCP: ${psi.lcp||'–'} · CLS: ${psi.cls||'–'} · TBT: ${psi.tbt||'–'} · FCP: ${psi.fcp||'–'}`;
+}
+function buildSchemaBlock(html){
+  try{
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(html,'text/html');
+    const types=new Set();
+    doc.querySelectorAll('script[type="application/ld+json"]').forEach(s=>{
+      try{
+        const obj=JSON.parse(s.textContent);
+        const arr=Array.isArray(obj)?obj:[obj];
+        arr.forEach(o=>{
+          [].concat(o['@type']||[]).forEach(t=>types.add(t));
+          (o['@graph']||[]).forEach(g=>[].concat(g['@type']||[]).forEach(t=>types.add(t)));
+        });
+      }catch(e){}
+    });
+    doc.querySelectorAll('[itemtype]').forEach(el=>{
+      const t=(el.getAttribute('itemtype')||'').replace(/https?:\/\/schema\.org\//,'');
+      if(t)types.add(t);
+    });
+    if(!types.size)return'\n\nStrukturierte Daten (Schema.org): Keines gefunden – weder JSON-LD noch Microdata.';
+    return`\n\nStrukturierte Daten (Schema.org) gefunden: ${[...types].join(', ')}`;
+  }catch(e){return'';}
 }
 
 // === PAGE TEXT EXTRACTION ===
@@ -823,7 +863,7 @@ async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx,ctx={}){
   const criteriaList=ids.map(id=>{const c=CRITERIA.find(x=>x.id===id);return`${c.id} · ${c.name} · ${c.ref}`}).join('\n');
   const ymylHint=ymyl==='clear_ymyl'?'YMYL: Klar YMYL – erhöhte Qualitätsanforderungen.':ymyl==='mixed_ymyl'?'YMYL: Teilweise YMYL – erhöhte Sorgfalt.':'';
   const sys=`Du bist ein Google Search Quality Evaluator (SQEG September 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array. Kein Text davor oder danach.\nFormat je Objekt: {"id":"1.1","category":"1: Seitenzweck & Seitentyp","criterion":"Name","sqeg_ref":"Sek. X.X","status":"green|amber|red","finding":"Beleg: [Signal aus HTML] | Regel: [WENN-Bedingung] | Bewertung: [Urteil]","improvement":"[konkreter Vorschlag, leer wenn green]","confidence":80}`;
-  const contextParts=(ctx.ctxBlock||'')+(ctx.serpBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
+  const contextParts=(ctx.ctxBlock||'')+(ctx.serpBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'')+(ctx.schemaBlock||'');
   const msg=`URL: ${url}\nSeitentext (vollst\u00e4ndig):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}${contextParts}\n\nZu bewertende Kriterien:\n${criteriaList}`;
   const text=await callApi([{role:'user',content:msg}],sys,2000);
   const m=text.match(/\[[\s\S]*\]/);
