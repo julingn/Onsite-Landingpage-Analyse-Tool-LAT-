@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Onsite Landingpage Analyse Tool",
   "scripts": {
-    "start": "node server.js"
+    "start": "serve public --listen $PORT"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "serve": "^14.2.4"
   },
   "engines": {
     "node": ">=18"
