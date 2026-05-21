@@ -588,7 +588,7 @@ function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function log(msg,type='info'){
   const box=document.getElementById('log-box');
   const cls=type==='ok'?'log-ok':type==='err'?'log-err':'log-info';
-  box.innerHTML+=`<span class="${cls}">[${new Date().toLocaleTimeString()}] ${escHtml(msg)}</span>\n`;
+  box.innerHTML+=`<div class="${cls}">[${new Date().toLocaleTimeString()}] ${escHtml(msg)}</div>`;
   box.scrollTop=box.scrollHeight;
 }
 function setProgress(pct,label='',status=''){
