@@ -1,4 +1,16 @@
-node_modules/
+﻿node_modules/
+
+# Umgebungsvariablen / Tokens – NIEMALS committen!
 .env
 .env.local
+config/.env
+*.env
+
 npm-debug.log*
+
+# Betriebssystem-Dateien
+.DS_Store
+Thumbs.db
+
+# Editor-Dateien
+.vscode/
