@@ -371,7 +371,10 @@ button{font-family:inherit}
     <div class="input-card">
       <div class="progress-header">
         <span class="progress-label" id="progress-label">Analyse läuft…</span>
-        <span class="progress-pct" id="progress-pct">0%</span>
+        <span style="display:flex;align-items:center;gap:12px">
+          <span id="progress-timer" style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace"></span>
+          <span class="progress-pct" id="progress-pct">0%</span>
+        </span>
       </div>
       <div id="progress-bar-wrap"><div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div></div>
       <div id="loader-wrap"><div class="loader-dots">
@@ -621,6 +624,7 @@ const MINI_CALLS=[
 // === STATE ===
 let analysisResults=[],pqResults=[],e8Result=null,ymylResult=null,currentUrl='',currentHtml='';
 let gscData=null,serpData=null,backlinkData=null,psiData=null;
+let analysisStartTime=0,timerInterval=null,lastPct=0;
 
 // === LOG / PROGRESS ===
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -631,10 +635,22 @@ function log(msg,type='info'){
   box.scrollTop=box.scrollHeight;
 }
 function setProgress(pct,label='',status=''){
+  lastPct=pct;
   document.getElementById('progress-bar').style.width=pct+'%';
   document.getElementById('progress-pct').textContent=Math.round(pct)+'%';
   if(label)document.getElementById('progress-label').textContent=label;
   if(status)document.getElementById('status-msg').textContent=status;
+}
+
+// === TIMER ===
+function formatTime(s){const m=Math.floor(s/60),sec=Math.round(s%60);return`${m}:${sec.toString().padStart(2,'0')}`}
+function updateTimer(){
+  const el=document.getElementById('progress-timer');
+  if(!el)return;
+  const elapsed=(Date.now()-analysisStartTime)/1000;
+  let txt=formatTime(elapsed);
+  if(lastPct>5&&lastPct<100){const eta=elapsed*(100-lastPct)/lastPct;txt+=` · ~${formatTime(eta)} übrig`;}
+  el.textContent=txt;
 }
 
 // === START ANALYSIS ===
@@ -655,6 +671,10 @@ async function startAnalysis(){
   document.getElementById('log-box').innerHTML='';
   analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
   gscData=null;serpData=null;backlinkData=null;psiData=null;
+  analysisStartTime=Date.now();lastPct=0;
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(updateTimer,1000);
+  document.getElementById('progress-timer').textContent='';
   setProgress(0,'Analyse startet…','Vorbereitung…');
   showTool('sqeg');
 
@@ -742,6 +762,9 @@ async function startAnalysis(){
     renderResults(keyword);
     setProgress(100,'Fertig!','Analyse abgeschlossen.');
     setTimeout(()=>{
+      if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+      const totalSec=Math.round((Date.now()-analysisStartTime)/1000);
+      document.getElementById('progress-timer').textContent=`Fertig in ${formatTime(totalSec)}`;
       // Fortschrittsbalken + Loader ausblenden, Log-Box bleibt sichtbar
       document.getElementById('progress-bar-wrap').style.display='none';
       document.getElementById('loader-wrap').style.display='none';
@@ -751,6 +774,7 @@ async function startAnalysis(){
       document.getElementById('results-section').style.display='block';
     },600);
   }catch(err){
+    if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
     log('Kritischer Fehler: '+err.message,'err');
     setProgress(0,'Fehler',err.message);
   }
