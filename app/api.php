@@ -26,11 +26,23 @@ if (empty($_SESSION['logged_in'])) {
 
 require_once __DIR__ . '/config.php';
 
-$apiKey = CFG_ANTHROPIC_KEY;
-if (empty($apiKey)) {
-    http_response_code(503);
-    echo json_encode(['error' => ['type' => 'no_key', 'message' => 'Kein API-Key hinterlegt. Bitte ANTHROPIC_API_KEY als Umgebungsvariable oder in den Einstellungen setzen.']]);
-    exit;
+$provider = CFG_AI_PROVIDER; // 'anthropic' oder 'openai'
+
+// ── API-Key je Provider prüfen ──────────────────────────────────────────
+if ($provider === 'openai') {
+    $apiKey = CFG_OPENAI_KEY;
+    if (empty($apiKey)) {
+        http_response_code(503);
+        echo json_encode(['error' => ['type' => 'no_key', 'message' => 'Kein OpenAI API-Key hinterlegt. Bitte OPENAI_API_KEY als Umgebungsvariable oder in den Einstellungen setzen.']]);
+        exit;
+    }
+} else {
+    $apiKey = CFG_ANTHROPIC_KEY;
+    if (empty($apiKey)) {
+        http_response_code(503);
+        echo json_encode(['error' => ['type' => 'no_key', 'message' => 'Kein Anthropic API-Key hinterlegt. Bitte ANTHROPIC_API_KEY als Umgebungsvariable oder in den Einstellungen setzen.']]);
+        exit;
+    }
 }
 
 $raw = file_get_contents('php://input');
@@ -47,20 +59,72 @@ if (!$body || empty($body['messages'])) {
     exit;
 }
 
-// Modell aus config
-$model = CFG_AI_MODEL;
+// Modell aus config (Provider-spezifisch)
+$model = ($provider === 'openai') ? CFG_OPENAI_MODEL : CFG_AI_MODEL;
 
 // Build payload — allow caller to override model, but enforce max_tokens cap
-$payload = [
-    'model'      => $body['model'] ?? $model,
-    'max_tokens' => min((int)($body['max_tokens'] ?? 2000), 4096),
-    'messages'   => $body['messages'],
-];
-if (!empty($body['system'])) {
-    $payload['system'] = $body['system'];
+$requestedModel  = $body['model'] ?? $model;
+$requestedTokens = min((int)($body['max_tokens'] ?? 2000), 4096);
+$messages        = $body['messages'];
+$systemPrompt    = $body['system'] ?? '';
+
+// ── Anthropic ──────────────────────────────────────────────────────────
+if ($provider !== 'openai') {
+    $payload = [
+        'model'      => $requestedModel,
+        'max_tokens' => $requestedTokens,
+        'messages'   => $messages,
+    ];
+    if (!empty($systemPrompt)) {
+        $payload['system'] = $systemPrompt;
+    }
+
+    $ch = curl_init('https://api.anthropic.com/v1/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($payload),
+        CURLOPT_TIMEOUT        => 180,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'x-api-key: ' . $apiKey,
+            'anthropic-version: 2023-06-01',
+        ],
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err      = curl_error($ch);
+    curl_close($ch);
+
+    if ($err) {
+        http_response_code(502);
+        echo json_encode(['error' => ['type' => 'curl_error', 'message' => $err]]);
+        exit;
+    }
+
+    http_response_code($httpCode);
+    echo $response;
+    exit;
 }
 
-$ch = curl_init('https://api.anthropic.com/v1/messages');
+// ── OpenAI ─────────────────────────────────────────────────────────────
+// System-Prompt als erste Nachricht mit role=system einfügen
+$oaiMessages = [];
+if (!empty($systemPrompt)) {
+    $oaiMessages[] = ['role' => 'system', 'content' => $systemPrompt];
+}
+foreach ($messages as $msg) {
+    $oaiMessages[] = $msg;
+}
+
+$payload = [
+    'model'      => $requestedModel,
+    'max_tokens' => $requestedTokens,
+    'messages'   => $oaiMessages,
+];
+
+$ch = curl_init('https://api.openai.com/v1/chat/completions');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
@@ -68,8 +132,7 @@ curl_setopt_array($ch, [
     CURLOPT_TIMEOUT        => 180,
     CURLOPT_HTTPHEADER     => [
         'Content-Type: application/json',
-        'x-api-key: ' . $apiKey,
-        'anthropic-version: 2023-06-01',
+        'Authorization: Bearer ' . $apiKey,
     ],
 ]);
 
@@ -84,5 +147,27 @@ if ($err) {
     exit;
 }
 
-http_response_code($httpCode);
-echo $response;
+// OpenAI-Response auf Anthropic-Format normalisieren
+// (damit index.php kein zweites Response-Format kennen muss)
+$oaiData = json_decode($response, true);
+if ($httpCode === 200 && isset($oaiData['choices'][0]['message']['content'])) {
+    $text = $oaiData['choices'][0]['message']['content'];
+    $normalized = [
+        'id'      => $oaiData['id'] ?? '',
+        'type'    => 'message',
+        'role'    => 'assistant',
+        'model'   => $oaiData['model'] ?? $requestedModel,
+        'content' => [['type' => 'text', 'text' => $text]],
+        'usage'   => [
+            'input_tokens'  => $oaiData['usage']['prompt_tokens']     ?? 0,
+            'output_tokens' => $oaiData['usage']['completion_tokens'] ?? 0,
+        ],
+        'stop_reason' => $oaiData['choices'][0]['finish_reason'] ?? 'end_turn',
+    ];
+    http_response_code(200);
+    echo json_encode($normalized);
+} else {
+    // Fehlerantwort von OpenAI durchleiten
+    http_response_code($httpCode);
+    echo $response;
+}
