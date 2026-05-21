@@ -3,392 +3,238 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LAT – Landingpage Analyse Tool</title>
+  <title>LAT – Login</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
-      --accent: #0ea5e9;
       --bg: #f8fafc;
       --surface: #ffffff;
       --text: #0f172a;
       --muted: #64748b;
       --border: #e2e8f0;
       --radius: 12px;
+      --error: #ef4444;
     }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    /* ── NAV ── */
-    nav {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .nav-logo {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--primary);
-      letter-spacing: -0.5px;
-    }
-    .nav-logo span { color: var(--text); }
-    .nav-links { display: flex; gap: 2rem; }
-    .nav-links a {
-      text-decoration: none;
-      color: var(--muted);
-      font-size: 0.95rem;
-      transition: color .2s;
-    }
-    .nav-links a:hover { color: var(--primary); }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-      padding: .55rem 1.25rem;
-      border-radius: 8px;
-      font-size: .9rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: background .2s, transform .1s;
-    }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-    .btn-outline {
-      background: transparent;
-      color: var(--primary);
-      border: 1.5px solid var(--primary);
-    }
-    .btn-outline:hover { background: #eff6ff; }
-
-    /* ── HERO ── */
-    .hero {
-      text-align: center;
-      padding: 5rem 1.5rem 4rem;
       background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
-      border-bottom: 1px solid var(--border);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
     }
-    .hero-badge {
-      display: inline-block;
-      background: #dbeafe;
-      color: var(--primary);
-      font-size: .78rem;
-      font-weight: 600;
-      padding: .3rem .8rem;
-      border-radius: 999px;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-    }
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.25rem);
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -1px;
-      margin-bottom: 1rem;
-    }
-    .hero h1 em { font-style: normal; color: var(--primary); }
-    .hero p {
-      max-width: 600px;
-      margin: 0 auto 2rem;
-      color: var(--muted);
-      font-size: 1.1rem;
-    }
-    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
-    /* ── ANALYSE FORM ── */
-    .analyse-box {
-      max-width: 720px;
-      margin: 3rem auto;
-      padding: 0 1.5rem;
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+      padding: 1.5rem;
     }
-    .analyse-card {
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo-mark {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -1px;
+    }
+    .logo-mark span { color: var(--text); }
+    .logo-sub {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: .3rem;
+    }
+
+    .login-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 2rem;
-      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+      padding: 2.25rem 2rem;
+      box-shadow: 0 8px 32px rgba(37, 99, 235, .08);
     }
-    .analyse-card h2 {
-      font-size: 1.2rem;
+
+    .login-card h1 {
+      font-size: 1.35rem;
       font-weight: 700;
-      margin-bottom: 1.25rem;
+      margin-bottom: .35rem;
     }
-    .input-row {
-      display: flex;
-      gap: .75rem;
-      flex-wrap: wrap;
+    .login-card .subtitle {
+      font-size: .88rem;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
     }
-    .input-row input {
-      flex: 1;
-      min-width: 240px;
-      padding: .7rem 1rem;
+
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: .4rem;
+      color: var(--text);
+    }
+    .form-group input {
+      width: 100%;
+      padding: .72rem 1rem;
       border: 1.5px solid var(--border);
       border-radius: 8px;
       font-size: .95rem;
       color: var(--text);
+      background: var(--bg);
       outline: none;
-      transition: border-color .2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .input-row input:focus { border-color: var(--primary); }
-    .input-row input::placeholder { color: #94a3b8; }
-
-    /* ── METRICS GRID ── */
-    .metrics-section {
-      max-width: 1100px;
-      margin: 4rem auto;
-      padding: 0 1.5rem;
+    .form-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+      background: #fff;
     }
-    .section-header { text-align: center; margin-bottom: 2.5rem; }
-    .section-header h2 { font-size: 1.8rem; font-weight: 800; letter-spacing: -.5px; }
-    .section-header p { color: var(--muted); margin-top: .5rem; }
-
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.25rem;
-    }
-    .metric-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      transition: box-shadow .2s, transform .2s;
-    }
-    .metric-card:hover { box-shadow: 0 8px 32px rgba(37,99,235,.1); transform: translateY(-3px); }
-    .metric-icon {
-      font-size: 1.75rem;
-      margin-bottom: .75rem;
-    }
-    .metric-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
-    .metric-card p { font-size: .88rem; color: var(--muted); }
-    .metric-tag {
-      display: inline-block;
-      margin-top: .75rem;
-      font-size: .75rem;
-      font-weight: 600;
-      padding: .2rem .6rem;
-      border-radius: 999px;
-      background: #f1f5f9;
-      color: var(--muted);
-    }
-
-    /* ── SCORE DEMO ── */
-    .demo-section {
-      background: linear-gradient(135deg, #1e3a5f 0%, #0c4a6e 100%);
-      color: #fff;
-      padding: 4rem 1.5rem;
-      text-align: center;
-      margin: 4rem 0;
-    }
-    .demo-section h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: .5rem; }
-    .demo-section p { color: #94a3b8; margin-bottom: 2rem; }
-    .score-cards {
-      display: flex;
-      justify-content: center;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .score-card {
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: var(--radius);
-      padding: 1.5rem 2rem;
-      min-width: 140px;
-    }
-    .score-value {
-      font-size: 2.5rem;
-      font-weight: 800;
-      line-height: 1;
-    }
-    .score-value.green { color: #4ade80; }
-    .score-value.yellow { color: #facc15; }
-    .score-value.red { color: #f87171; }
-    .score-label { font-size: .82rem; color: #94a3b8; margin-top: .4rem; }
-
-    /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 1.5rem;
-      text-align: center;
-      color: var(--muted);
-      font-size: .85rem;
-    }
-
-    /* ── RESULT AREA ── */
-    #result-area {
+    .form-group .error-msg {
       display: none;
-      margin-top: 1.5rem;
-      padding: 1.25rem;
-      background: #f0fdf4;
-      border: 1.5px solid #86efac;
+      font-size: .78rem;
+      color: var(--error);
+      margin-top: .35rem;
+    }
+    .form-group.has-error .error-msg { display: block; }
+    .form-group.has-error input { border-color: var(--error); }
+
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .forgot-row a {
+      font-size: .82rem;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .forgot-row a:hover { text-decoration: underline; }
+
+    .btn-login {
+      width: 100%;
+      padding: .78rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
       border-radius: 8px;
-      font-size: .9rem;
-      color: #166534;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+
+    .alert {
+      display: none;
+      margin-bottom: 1.25rem;
+      padding: .8rem 1rem;
+      border-radius: 8px;
+      font-size: .875rem;
+    }
+    .alert.error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
+    .alert.show { display: block; }
+
+    footer {
+      margin-top: 1.75rem;
+      text-align: center;
+      font-size: .8rem;
+      color: var(--muted);
     }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <div class="nav-logo">LAT <span>Analyse</span></div>
-    <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#demo">Demo-Score</a>
-      <a href="#">Dokumentation</a>
-    </div>
-    <button class="btn btn-primary">Jetzt starten</button>
-  </nav>
+  <div class="login-wrapper">
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-badge">Beta · Testing</div>
-    <h1>Die smarte <em>Landingpage</em><br>Analyse für mehr Conversion</h1>
-    <p>Analysiere deine Landingpages nach E-E-A-T, Core Web Vitals, SEO-Struktur und weiteren Qualitätsmetriken – in Sekunden.</p>
-    <div class="hero-actions">
-      <button class="btn btn-primary">&#9654; Analyse starten</button>
-      <button class="btn btn-outline">Mehr erfahren</button>
+    <div class="logo">
+      <div class="logo-mark">LAT <span>Analyse</span></div>
+      <div class="logo-sub">Landingpage Analyse Tool</div>
     </div>
-  </section>
 
-  <!-- ANALYSE FORM -->
-  <section class="analyse-box" id="features">
-    <div class="analyse-card">
-      <h2>&#128270; URL analysieren</h2>
-      <div class="input-row">
-        <input type="url" id="url-input" placeholder="https://deine-landingpage.de" />
-        <button class="btn btn-primary" onclick="runAnalysis()">Analysieren</button>
-      </div>
-      <div id="result-area">
-        &#10003; Analyse gestartet für: <strong id="result-url"></strong><br>
-        Ergebnisse werden geladen… (Demo-Modus)
-      </div>
-    </div>
-  </section>
+    <div class="login-card">
+      <h1>Willkommen zurück</h1>
+      <p class="subtitle">Melde dich mit deinen Zugangsdaten an.</p>
 
-  <!-- METRICS GRID -->
-  <section class="metrics-section">
-    <div class="section-header">
-      <h2>Analysierte Metriken</h2>
-      <p>Das LAT prüft deine Seite nach den wichtigsten Qualitätskriterien.</p>
-    </div>
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-icon">&#127894;</div>
-        <h3>E-E-A-T</h3>
-        <p>Experience, Expertise, Authoritativeness & Trustworthiness nach Google-Richtlinien.</p>
-        <span class="metric-tag">SEO-Qualität</span>
+      <div class="alert error" id="login-alert">
+        E-Mail oder Passwort ist falsch. Bitte erneut versuchen.
       </div>
-      <div class="metric-card">
-        <div class="metric-icon">&#9889;</div>
-        <h3>Core Web Vitals</h3>
-        <p>LCP, FID/INP und CLS werden gemessen und bewertet.</p>
-        <span class="metric-tag">Performance</span>
-      </div>
-      <div class="metric-card">
-        <div class="metric-icon">&#128203;</div>
-        <h3>Content-Struktur</h3>
-        <p>Überschriften-Hierarchie, Lesbarkeit, Keyword-Dichte und semantische Relevanz.</p>
-        <span class="metric-tag">On-Page SEO</span>
-      </div>
-      <div class="metric-card">
-        <div class="metric-icon">&#128241;</div>
-        <h3>Mobile Usability</h3>
-        <p>Responsive Design, Touch-Targets und Viewportoptimierung.</p>
-        <span class="metric-tag">UX</span>
-      </div>
-      <div class="metric-card">
-        <div class="metric-icon">&#128279;</div>
-        <h3>Interne Verlinkung</h3>
-        <p>Crawlability, Ankertext-Qualität und Linktiefe.</p>
-        <span class="metric-tag">Technisches SEO</span>
-      </div>
-      <div class="metric-card">
-        <div class="metric-icon">&#128274;</div>
-        <h3>Trust-Signale</h3>
-        <p>SSL, Impressum, Datenschutzerklärung, Social Proof und Bewertungen.</p>
-        <span class="metric-tag">Vertrauen</span>
-      </div>
-    </div>
-  </section>
 
-  <!-- DEMO SCORE -->
-  <section class="demo-section" id="demo">
-    <h2>Beispiel-Score auf einen Blick</h2>
-    <p>So sieht ein Analyse-Ergebnis im LAT aus</p>
-    <div class="score-cards">
-      <div class="score-card">
-        <div class="score-value green">87</div>
-        <div class="score-label">E-E-A-T Score</div>
-      </div>
-      <div class="score-card">
-        <div class="score-value green">92</div>
-        <div class="score-label">Performance</div>
-      </div>
-      <div class="score-card">
-        <div class="score-value yellow">61</div>
-        <div class="score-label">Content-Struktur</div>
-      </div>
-      <div class="score-card">
-        <div class="score-value green">95</div>
-        <div class="score-label">Mobile</div>
-      </div>
-      <div class="score-card">
-        <div class="score-value red">44</div>
-        <div class="score-label">Trust-Signale</div>
-      </div>
-    </div>
-  </section>
+      <form id="login-form" novalidate>
+        <div class="form-group" id="group-email">
+          <label for="email">E-Mail-Adresse</label>
+          <input type="email" id="email" name="email" placeholder="max@beispiel.de" autocomplete="email" />
+          <span class="error-msg">Bitte gib eine gültige E-Mail-Adresse ein.</span>
+        </div>
 
-  <!-- FOOTER -->
-  <footer>
-    &copy; 2026 LAT – Landingpage Analyse Tool &middot; <a href="#" style="color:inherit">GitHub</a>
-  </footer>
+        <div class="form-group" id="group-password">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" />
+          <span class="error-msg">Bitte gib dein Passwort ein.</span>
+        </div>
+
+        <div class="forgot-row">
+          <a href="#">Passwort vergessen?</a>
+        </div>
+
+        <button type="submit" class="btn-login">Anmelden</button>
+      </form>
+    </div>
+
+    <footer>&copy; 2026 LAT – Landingpage Analyse Tool</footer>
+  </div>
 
   <script>
-    function runAnalysis() {
-      const input = document.getElementById('url-input');
-      const resultArea = document.getElementById('result-area');
-      const resultUrl = document.getElementById('result-url');
-      const url = input.value.trim();
+    const form = document.getElementById('login-form');
+    const alertBox = document.getElementById('login-alert');
 
-      if (!url) {
-        input.focus();
-        input.style.borderColor = '#ef4444';
-        setTimeout(() => { input.style.borderColor = ''; }, 1500);
-        return;
+    function validateField(inputId, groupId) {
+      const input = document.getElementById(inputId);
+      const group = document.getElementById(groupId);
+      let valid = true;
+
+      if (inputId === 'email') {
+        valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+      } else if (inputId === 'password') {
+        valid = input.value.trim().length > 0;
       }
 
-      try { new URL(url); } catch {
-        input.style.borderColor = '#ef4444';
-        setTimeout(() => { input.style.borderColor = ''; }, 1500);
-        return;
+      if (!valid) {
+        group.classList.add('has-error');
+      } else {
+        group.classList.remove('has-error');
       }
-
-      resultUrl.textContent = url;
-      resultArea.style.display = 'block';
-      resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return valid;
     }
 
-    document.getElementById('url-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') runAnalysis();
+    document.getElementById('email').addEventListener('blur', () => validateField('email', 'group-email'));
+    document.getElementById('password').addEventListener('blur', () => validateField('password', 'group-password'));
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      alertBox.classList.remove('show');
+
+      const emailOk = validateField('email', 'group-email');
+      const passwordOk = validateField('password', 'group-password');
+
+      if (!emailOk || !passwordOk) return;
+
+      // Placeholder: Authentifizierungslogik kommt hier rein
+      alertBox.classList.add('show');
     });
   </script>
 </body>
