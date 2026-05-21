@@ -8,7 +8,7 @@ $csrfToken = $_SESSION['csrf_token'];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>evalu-pro · SQEG Analyzer</title>
+<title>LAT · SQEG Analyzer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,8 +53,10 @@ button{font-family:inherit}
   padding:0 20px;display:flex;align-items:center;gap:10px;
   border-bottom:1px solid var(--border);height:64px;flex-shrink:0;
 }
-.sidebar-brand{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
-.sidebar-brand span{color:var(--accent)}
+.sidebar-brand{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.08em;text-transform:uppercase}
+.brand-logo{
+  height:28px;width:auto;display:block;flex-shrink:0;
+}
 .brand-icon-sm{
   width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#818cf8);
   border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -374,10 +376,8 @@ button{font-family:inherit}
 <div class="app-shell">
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="brand-icon-sm">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    </div>
-    <span class="sidebar-brand">evalu<span>-pro</span></span>
+    <img src="assets/logo.png" alt="MVV" class="brand-logo">
+    <span class="sidebar-brand">L·A·T</span>
   </div>
   <nav class="sidebar-nav">
     <button class="nav-item active" data-tool="sqeg">
@@ -391,7 +391,7 @@ button{font-family:inherit}
     </button>
   </nav>
   <div class="sidebar-footer">
-    <span>evalu-pro v1.0</span>
+    <span>LAT v2.0</span>
     <a href="../login.php?logout=1">Abmelden</a>
   </div>
 </aside>
