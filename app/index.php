@@ -373,10 +373,10 @@ button{font-family:inherit}
         <span class="progress-label" id="progress-label">Analyse läuft…</span>
         <span class="progress-pct" id="progress-pct">0%</span>
       </div>
-      <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
-      <div class="loader-dots">
+      <div id="progress-bar-wrap"><div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div></div>
+      <div id="loader-wrap"><div class="loader-dots">
         <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
-      </div>
+      </div></div>
       <div class="status-msg" id="status-msg">Initialisierung…</div>
       <div class="log-box" id="log-box"></div>
     </div>
@@ -608,6 +608,10 @@ async function startAnalysis(){
 
   document.getElementById('btn-start').disabled=true;
   document.getElementById('progress-section').style.display='block';
+  document.getElementById('progress-bar-wrap').style.display='block';
+  document.getElementById('loader-wrap').style.display='block';
+  document.getElementById('status-msg').style.display='block';
+  document.getElementById('progress-pct').style.display='';
   document.getElementById('results-section').style.display='none';
   document.getElementById('log-box').innerHTML='';
   analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
@@ -668,7 +672,12 @@ async function startAnalysis(){
     renderResults(keyword);
     setProgress(100,'Fertig!','Analyse abgeschlossen.');
     setTimeout(()=>{
-      document.getElementById('progress-section').style.display='none';
+      // Fortschrittsbalken + Loader ausblenden, Log-Box bleibt sichtbar
+      document.getElementById('progress-bar-wrap').style.display='none';
+      document.getElementById('loader-wrap').style.display='none';
+      document.getElementById('status-msg').style.display='none';
+      document.getElementById('progress-label').textContent='Analyse-Log';
+      document.getElementById('progress-pct').style.display='none';
       document.getElementById('results-section').style.display='block';
     },600);
   }catch(err){
