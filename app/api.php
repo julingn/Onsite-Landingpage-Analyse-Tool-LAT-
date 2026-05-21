@@ -24,17 +24,12 @@ if (empty($_SESSION['logged_in'])) {
     exit;
 }
 
-// Load settings
-$settings = [];
-$sf = __DIR__ . '/settings.json';
-if (file_exists($sf)) {
-    $settings = json_decode(file_get_contents($sf), true) ?? [];
-}
+require_once __DIR__ . '/config.php';
 
-$apiKey = getenv('ANTHROPIC_API_KEY') ?: ($settings['anthropic_api_key'] ?? '');
+$apiKey = CFG_ANTHROPIC_KEY;
 if (empty($apiKey)) {
     http_response_code(503);
-    echo json_encode(['error' => ['type' => 'no_key', 'message' => 'Kein Anthropic API-Key hinterlegt. Bitte unter Einstellungen ergänzen.']]);
+    echo json_encode(['error' => ['type' => 'no_key', 'message' => 'Kein API-Key hinterlegt. Bitte ANTHROPIC_API_KEY als Umgebungsvariable oder in den Einstellungen setzen.']]);
     exit;
 }
 
@@ -52,8 +47,8 @@ if (!$body || empty($body['messages'])) {
     exit;
 }
 
-// Use model from settings or default
-$model = $settings['ai_model'] ?? 'claude-sonnet-4-5';
+// Modell aus config
+$model = CFG_AI_MODEL;
 
 // Build payload — allow caller to override model, but enforce max_tokens cap
 $payload = [

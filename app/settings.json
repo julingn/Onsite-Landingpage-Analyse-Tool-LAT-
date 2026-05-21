@@ -1,5 +1,13 @@
 {
+  "ai_provider": "anthropic",
+  "ai_model": "claude-sonnet-4-5",
   "anthropic_api_key": "",
-  "login_password_hash": "",
-  "ai_model": "claude-sonnet-4-5"
+  "openai_api_key": "",
+  "openai_model": "gpt-4.1",
+  "dataforseo_login": "",
+  "dataforseo_password": "",
+  "pagespeed_api_key": "",
+  "gsc_service_account_json": "",
+  "gsc_site_url": "",
+  "login_password_hash": ""
 }

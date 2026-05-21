@@ -16,15 +16,9 @@ if (!empty($_SESSION['logged_in'])) {
 
 $error = '';
 
-// Load settings
-$settings = [];
-$sf = __DIR__ . '/app/settings.json';
-if (file_exists($sf)) {
-    $settings = json_decode(file_get_contents($sf), true) ?? [];
-}
-
-$storedHash = $settings['login_password_hash'] ?? '';
-$defaultPassword = 'evalupro2025';
+require_once __DIR__ . '/app/config.php';
+$storedHash = CFG_PASSWORD_HASH;
+$defaultPassword = CFG_DEFAULT_PASSWORD;
 
 // Generate CSRF token
 if (empty($_SESSION['csrf_token'])) {
