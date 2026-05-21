@@ -779,6 +779,21 @@ function buildPsiBlock(psi){
   return`\n\nPageSpeed Mobile:\n• Score: ${psi.perf_score||'–'}/100\n• LCP: ${psi.lcp||'–'} · CLS: ${psi.cls||'–'} · TBT: ${psi.tbt||'–'} · FCP: ${psi.fcp||'–'}`;
 }
 
+// === PAGE TEXT EXTRACTION ===
+function extractPageText(html){
+  try{
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(html,'text/html');
+    ['script','style','noscript','nav','footer','aside','head','svg','iframe','template','form'].forEach(tag=>{
+      doc.querySelectorAll(tag).forEach(el=>el.remove());
+    });
+    const text=(doc.body?.textContent||'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+    return text;
+  }catch(e){
+    return html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  }
+}
+
 // === YMYL ===
 async function classifyYmyl(htmlSnippet,url){
   const sys=`Du bist ein Google Search Quality Evaluator. Klassifiziere den YMYL-Status der Seite.\nAntworte NUR mit einem dieser drei Werte (kein weiterer Text): clear_ymyl | mixed_ymyl | none\nYMYL-Kategorien: Finanzen, Medizin/Gesundheit, Recht, Sicherheit, große Kaufentscheidungen, Neuigkeiten/gesellschaftliche Themen, Kinderschutz.`;
