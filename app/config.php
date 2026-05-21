@@ -15,6 +15,53 @@
 declare(strict_types=1);
 
 /**
+ * Lädt eine .env-Datei und setzt Variablen als Prozess-Umgebungsvariablen.
+ * Bereits gesetzte Variablen (z.B. Railway) werden NICHT überschrieben.
+ *
+ * Format: KEY=VALUE, KEY="wert mit leerzeichen", # Kommentare
+ * Speicherort: Projekt-Root (.env) — per router.php vor Browser-Zugriff geschützt.
+ */
+function _cfg_load_dotenv(): void {
+    static $loaded = false;
+    if ($loaded) return;
+    $loaded = true;
+
+    // Projekt-Root ist eine Ebene über app/
+    $file = dirname(__DIR__) . '/.env';
+    if (!file_exists($file) || !is_readable($file)) return;
+
+    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        // Kommentare und leere Zeilen überspringen
+        if ($line === '' || str_starts_with($line, '#')) continue;
+        // KEY=VALUE aufteilen (nur am ersten = trennen)
+        $eqPos = strpos($line, '=');
+        if ($eqPos === false) continue;
+
+        $key   = trim(substr($line, 0, $eqPos));
+        $value = trim(substr($line, $eqPos + 1));
+
+        // Anführungszeichen entfernen (einfach und doppelt)
+        if (strlen($value) >= 2) {
+            $first = $value[0];
+            $last  = $value[-1];
+            if (($first === '"' && $last === '"') || ($first === "'" && $last === "'")) {
+                $value = substr($value, 1, -1);
+            }
+        }
+
+        // Nur setzen wenn noch nicht vorhanden (Railway-Vars haben Vorrang)
+        if (getenv($key) === false) {
+            putenv($key . '=' . $value);
+        }
+    }
+}
+
+// .env laden (vor allen cfg()-Aufrufen)
+_cfg_load_dotenv();
+
+/**
  * Lädt settings.json einmalig (Singleton).
  */
 function _cfg_settings(): array {
