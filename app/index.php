@@ -722,16 +722,22 @@ async function startAnalysis(){
     log('YMYL: '+ymylResult,'ok');
     setProgress(18);
 
-    log('Starte 21 SQEG-Mini-Calls (42 Kriterien)…');
-    setProgress(18,'SQEG-Kriterien analysieren…','21 parallele KI-Anfragen…');
-    const miniPromises=MINI_CALLS.map((ids,idx)=>runMiniCall(ids,htmlSnippet,currentUrl,ymylResult,effectiveKeyword,idx,ctx));
-    const miniResults=await Promise.allSettled(miniPromises);
-    miniResults.forEach((r,i)=>{
-      const names=MINI_CALLS[i].map(id=>CRITERIA.find(c=>c.id===id)?.name||id).join(' · ');
-      if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`✓ ${names}`,'ok')}
-      else{log(`✗ ${names}: `+r.reason,'err')}
-      setProgress(18+((i+1)/21)*52);
-    });
+    log('Starte 21 SQEG-Mini-Calls (42 Kriterien) in Batches…');
+    setProgress(18,'SQEG-Kriterien analysieren…','KI-Anfragen…');
+    const BATCH_SIZE=5;
+    let callsDone=0;
+    for(let b=0;b<MINI_CALLS.length;b+=BATCH_SIZE){
+      const batch=MINI_CALLS.slice(b,b+BATCH_SIZE);
+      const batchResults=await Promise.allSettled(batch.map((ids,j)=>runMiniCall(ids,htmlSnippet,currentUrl,ymylResult,effectiveKeyword,b+j,ctx)));
+      batchResults.forEach((r,j)=>{
+        const i=b+j;
+        const names=MINI_CALLS[i].map(id=>CRITERIA.find(c=>c.id===id)?.name||id).join(' · ');
+        if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`✓ ${names}`,'ok')}
+        else{log(`✗ ${names}: `+r.reason,'err')}
+        callsDone++;
+        setProgress(18+(callsDone/21)*52);
+      });
+    }
     setProgress(92,'Ergebnisse rendern…','Fast fertig…');
     renderResults(keyword);
     setProgress(100,'Fertig!','Analyse abgeschlossen.');
