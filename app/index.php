@@ -403,19 +403,12 @@ button{font-family:inherit}
       <div class="sqeg-level" data-level="Lowest">Lowest</div>
       <div class="sqeg-level" data-level="Low">Low</div>
       <div class="sqeg-level" data-level="Medium">Medium</div>
-      <div class="sqeg-level" data-level="Medium+">Medium+</div>
       <div class="sqeg-level" data-level="High">High</div>
       <div class="sqeg-level" data-level="Highest">Highest</div>
     </div>
     <div class="needs-met-block" id="needs-met-block">
-      <div class="needs-met-label">e8 · Needs Met</div>
-      <div class="needs-met-scale" id="needs-met-scale">
-        <span class="nm-btn" data-nm="FullyM">Fully Meets</span>
-        <span class="nm-btn" data-nm="HighlyM">Highly Meets</span>
-        <span class="nm-btn" data-nm="ModeratelyM">Moderately Meets</span>
-        <span class="nm-btn" data-nm="SlightlyM">Slightly Meets</span>
-        <span class="nm-btn" data-nm="FailsM">Fails to Meet</span>
-      </div>
+      <div class="needs-met-label">Cluster 8 · Needs Met (Suchabsicht)</div>
+      <div id="needs-met-scale"></div>
     </div>
     <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">Prioritäten-Matrix</span><div class="section-divider-line"></div></div>
     <div class="priority-matrix">
@@ -534,51 +527,83 @@ function setMode(mode){
 }
 function toggleContext(){document.getElementById('context-fields').classList.toggle('visible')}
 
-// === CRITERIA ===
+// === CRITERIA (SQEG Sept 2025 — 42 Kriterien, 8 Cluster) ===
 const CRITERIA=[
-  {id:'c1', cat:'A: Seitenzweck',          name:'Klar erkennbarer Seitenzweck (Beneficial Purpose)',          ref:'Sek. 2.2'},
-  {id:'c2', cat:'A: Seitenzweck',          name:'MC klar identifizierbar und vom Rest abgegrenzt',            ref:'Sek. 2.4.1'},
-  {id:'c3', cat:'A: Seitenzweck',          name:'YMYL-Einordnung & erhöhte Qualitätsstandards',               ref:'Sek. 2.3'},
-  {id:'c4', cat:'A: Seitenzweck',          name:'Seitentyp-angemessene Qualitätserwartung erfüllt',           ref:'Sek. 3.1'},
-  {id:'c5', cat:'B: E-E-A-T',              name:'Experience – Ersthand-Erfahrung des Content-Creators',       ref:'Sek. 3.4'},
-  {id:'c6', cat:'B: E-E-A-T',              name:'Expertise – Fachkompetenz (formal & informal)',              ref:'Sek. 3.4'},
-  {id:'c7', cat:'B: E-E-A-T',              name:'Authoritativeness – Autorität der Website im Themenfeld',    ref:'Sek. 3.4'},
-  {id:'c8', cat:'B: E-E-A-T',              name:'Trust – Gesamtvertrauenswürdigkeit (wichtigstes Element)',   ref:'Sek. 3.4'},
-  {id:'c9', cat:'B: E-E-A-T',              name:'YMYL: Experience vs. Expertise korrekt eingesetzt',          ref:'Sek. 3.4.1'},
-  {id:'c10',cat:'C: MC-Qualität',          name:'Effort – Menschlicher Aufwand bei Content-Erstellung',      ref:'Sek. 3.2'},
-  {id:'c11',cat:'C: MC-Qualität',          name:'Originality – Einzigartiger, nicht-kopierbarer Content',    ref:'Sek. 3.2'},
-  {id:'c12',cat:'C: MC-Qualität',          name:'Talent & Skill – Handwerkliche Qualität der Ausführung',    ref:'Sek. 3.2'},
-  {id:'c13',cat:'C: MC-Qualität',          name:'Accuracy – Faktische Korrektheit & Expertenkonsens',        ref:'Sek. 3.2'},
-  {id:'c14',cat:'C: MC-Qualität',          name:'Kein Filler-Content – MC steht prominent vorne',            ref:'Sek. 5.2.2'},
-  {id:'c15',cat:'C: MC-Qualität',          name:'Kein Scaled/AI Content Abuse',                              ref:'Sek. 4.6.5'},
-  {id:'c16',cat:'D: Reputation & Transparenz',name:'Reputation der Website',                                 ref:'Sek. 3.3.1'},
-  {id:'c17',cat:'D: Reputation & Transparenz',name:'Reputation des Content-Creators erkennbar',              ref:'Sek. 3.3.4'},
-  {id:'c18',cat:'D: Reputation & Transparenz',name:'Verantwortlichkeit – Wer steckt hinter der Seite?',      ref:'Sek. 2.5.2'},
-  {id:'c19',cat:'D: Reputation & Transparenz',name:'About-Seite / Impressum / Rechtliche Angaben',           ref:'Sek. 2.5.3'},
-  {id:'c20',cat:'D: Reputation & Transparenz',name:'Kontakt & Kundenservice',                                ref:'Sek. 2.5.3'},
-  {id:'c21',cat:'D: Reputation & Transparenz',name:'Kein offensichtlicher Interessenkonflikt ohne Offenlegung',ref:'Sek. 3.4'},
-  {id:'c22',cat:'E: Lowest Quality Signals',  name:'Kein täuschendes Design / täuschender Seitenzweck',     ref:'Sek. 4.5.3'},
-  {id:'c23',cat:'E: Lowest Quality Signals',  name:'MC nicht durch Ads/SC verdeckt oder obstruiert',        ref:'Sek. 4.5.4'},
-  {id:'c24',cat:'E: Lowest Quality Signals',  name:'Kein Verdacht auf Scam oder schädliches Verhalten',     ref:'Sek. 4.5.5'},
-  {id:'c25',cat:'F: UX & SC',              name:'Supplementary Content unterstützt Seitenzweck sinnvoll',    ref:'Sek. 2.4.2'},
-  {id:'c26',cat:'F: UX & SC',              name:'Seitentitel beschreibend und nicht irreführend',            ref:'Sek. 3.1'},
-  {id:'c27',cat:'F: UX & SC',              name:'Mobile-Nutzbarkeit & Page Experience',                      ref:'Sek. 7.0'},
-  {id:'c28',cat:'G: Freshness',            name:'Aktualität: Freshness für zeitkritische Themen',            ref:'Sek. 18.0'},
-  {id:'c29',cat:'G: Freshness',            name:'Content-Vollständigkeit & Tiefe',                           ref:'Sek. 4.1'},
+  // Cluster 1: Seitenzweck & Seitentyp
+  {id:'1.1',cat:'1: Seitenzweck & Seitentyp',name:'Erkennbarer Seitenzweck',             ref:'Sek. 2.2'},
+  {id:'1.2',cat:'1: Seitenzweck & Seitentyp',name:'Seitentyp-Klassifikation',             ref:'Sek. 3.1'},
+  {id:'1.3',cat:'1: Seitenzweck & Seitentyp',name:'YMYL-Einordnung',                      ref:'Sek. 2.3'},
+  {id:'1.4',cat:'1: Seitenzweck & Seitentyp',name:'Hauptinhalt klar abgegrenzt',           ref:'Sek. 2.4.1'},
+  // Cluster 2: Inhalt & Tiefe
+  {id:'2.1',cat:'2: Inhalt & Tiefe',          name:'Menschlicher Aufwand erkennbar',       ref:'Sek. 3.2'},
+  {id:'2.2',cat:'2: Inhalt & Tiefe',          name:'Originalität',                         ref:'Sek. 3.2'},
+  {id:'2.3',cat:'2: Inhalt & Tiefe',          name:'Handwerkliche Qualität',               ref:'Sek. 3.2'},
+  {id:'2.4',cat:'2: Inhalt & Tiefe',          name:'Faktische Korrektheit',                ref:'Sek. 3.2'},
+  {id:'2.5',cat:'2: Inhalt & Tiefe',          name:'Themen-Tiefe & Vollständigkeit',       ref:'Sek. 4.1'},
+  {id:'2.6',cat:'2: Inhalt & Tiefe',          name:'Kein Füllmaterial',                    ref:'Sek. 5.2.2'},
+  {id:'2.7',cat:'2: Inhalt & Tiefe',          name:'Kein KI/Massen-Content-Missbrauch',    ref:'Sek. 4.6.5'},
+  {id:'2.8',cat:'2: Inhalt & Tiefe',          name:'Aktualität des Inhalts',               ref:'Sek. 18.0'},
+  // Cluster 3: E-E-A-T
+  {id:'3.1',cat:'3: E-E-A-T',                 name:'Eigene Erfahrung (Experience)',        ref:'Sek. 3.4'},
+  {id:'3.2',cat:'3: E-E-A-T',                 name:'Fachkompetenz (Expertise)',            ref:'Sek. 3.4'},
+  {id:'3.3',cat:'3: E-E-A-T',                 name:'Autorität im Thema',                  ref:'Sek. 3.4'},
+  {id:'3.4',cat:'3: E-E-A-T',                 name:'Vertrauenswürdigkeit (Trust) ★',      ref:'Sek. 3.4'},
+  {id:'3.5',cat:'3: E-E-A-T',                 name:'YMYL: Richtiges E-E-A-T-Profil',      ref:'Sek. 3.4.1'},
+  // Cluster 4: Reputation & Transparenz
+  {id:'4.1',cat:'4: Reputation & Transparenz',name:'Website-Reputation',                  ref:'Sek. 3.3.1'},
+  {id:'4.2',cat:'4: Reputation & Transparenz',name:'Autor/Creator erkennbar',             ref:'Sek. 3.3.4'},
+  {id:'4.3',cat:'4: Reputation & Transparenz',name:'Impressum & rechtliche Angaben',      ref:'Sek. 2.5.3'},
+  {id:'4.4',cat:'4: Reputation & Transparenz',name:'Kontaktmöglichkeiten',                ref:'Sek. 2.5.3'},
+  {id:'4.5',cat:'4: Reputation & Transparenz',name:'Wer steckt hinter der Seite?',        ref:'Sek. 2.5.2'},
+  {id:'4.6',cat:'4: Reputation & Transparenz',name:'Interessenkonflikt offengelegt',       ref:'Sek. 3.4'},
+  // Cluster 5: Schaden & Täuschung
+  {id:'5.1',cat:'5: Schaden & Täuschung',     name:'Kein täuschendes Design ★',           ref:'Sek. 4.5.3'},
+  {id:'5.2',cat:'5: Schaden & Täuschung',     name:'Hauptinhalt zugänglich',              ref:'Sek. 4.5.4'},
+  {id:'5.3',cat:'5: Schaden & Täuschung',     name:'Kein Scam/Spam-Verdacht ★',          ref:'Sek. 4.5.5'},
+  {id:'5.4',cat:'5: Schaden & Täuschung',     name:'Keine schädlichen Inhalte ★',        ref:'Sek. 4.2'},
+  {id:'5.5',cat:'5: Schaden & Täuschung',     name:'Keine gefährlichen Fehlinformationen ★',ref:'Sek. 4.4'},
+  {id:'5.6',cat:'5: Schaden & Täuschung',     name:'Keine Seiten-Kompromittierung',       ref:'Sek. 4.6.2'},
+  {id:'5.7',cat:'5: Schaden & Täuschung',     name:'Keine Domain-Zweckentfremdung',       ref:'Sek. 4.6.3'},
+  // Cluster 6: Technik & UX
+  {id:'6.1',cat:'6: Technik & UX',            name:'Core Web Vitals (LCP/CLS/TBT)',       ref:'Sek. 7.0'},
+  {id:'6.2',cat:'6: Technik & UX',            name:'Mobile-Tauglichkeit',                 ref:'Sek. 7.0'},
+  {id:'6.3',cat:'6: Technik & UX',            name:'Seitentitel & Meta-Description',      ref:'Sek. 3.1'},
+  {id:'6.4',cat:'6: Technik & UX',            name:'Strukturierte Daten (Schema.org)',    ref:'Sek. 7.0'},
+  {id:'6.5',cat:'6: Technik & UX',            name:'HTTPS & Verbindungssicherheit',       ref:'Sek. 4.5.5'},
+  // Cluster 7: Werbung & SC
+  {id:'7.1',cat:'7: Werbung & SC',            name:'Ergänzender Inhalt sinnvoll',         ref:'Sek. 2.4.2'},
+  {id:'7.2',cat:'7: Werbung & SC',            name:'Werbung klar gekennzeichnet',         ref:'Sek. 2.4.3'},
+  {id:'7.3',cat:'7: Werbung & SC',            name:'Werbung nicht übermäßig aufdringlich',ref:'Sek. 2.4.4'},
+  // Cluster 8: Needs Met
+  {id:'8.1',cat:'8: Needs Met',               name:'Suchabsicht getroffen ★',             ref:'Sek. 13.0'},
+  {id:'8.2',cat:'8: Needs Met',               name:'Antwort vollständig',                 ref:'Sek. 13.0'},
+  {id:'8.3',cat:'8: Needs Met',               name:'Aktualität der Antwort',              ref:'Sek. 18.0'},
+  {id:'8.4',cat:'8: Needs Met',               name:'Verständlichkeit für die Zielgruppe', ref:'Sek. 13.0'},
 ];
-const PQ_CRITERIA=[
-  {id:'e1',name:'Externe Reputation der Website',         ref:'Sek. 3.3.1–3.3.4'},
-  {id:'e2',name:'Deceptive Design & Creator-Verifikation',ref:'Sek. 4.5.3'},
-  {id:'e3',name:'Harmful to Self or Others',              ref:'Sek. 4.2'},
-  {id:'e4',name:'Harmful to Specified Groups',            ref:'Sek. 4.3'},
-  {id:'e5',name:'Harmfully Misleading Information',       ref:'Sek. 4.4'},
-  {id:'e6',name:'Interessenkonflikt & Transparenz',       ref:'Sek. 3.4'},
-  {id:'e7',name:'Seitentyp-Sonderregeln',                 ref:'Sek. 9.0–9.3'},
-];
-const WEIGHTS={c8:4,c24:4,c22:4,c3:3,c5:3,c6:3,c7:3,c9:3,c13:3,c18:3,c19:3,c20:3,c21:3,c23:3,e3:3,e4:3,e5:3,e6:3,c10:1.5,c11:1.5,c12:1.5,c14:1.5,c15:1.5,c28:1.5,c29:1.5};
-function getWeight(id){return WEIGHTS[id]??2}
+// Gewicht 4 (Kritisch): 3.4, 5.1, 5.3, 5.4, 5.5, 8.1
+// Gewicht 3 (Hoch):     1.1, 1.3, 2.4, 3.1–3.3, 3.5, 4.1–4.2, 4.5–4.6, 5.2, 5.6–5.7, 8.2
+// Gewicht 2.5:          2.1, 2.2
+// Gewicht 2 (Standard): 1.2, 1.4, 2.3, 4.3, 4.4, 6.3, 6.5, 7.1–7.3, 8.3
+// Gewicht 1.5 (Ergänz.):2.5–2.8, 6.1–6.2, 6.4, 8.4
+const WEIGHTS={
+  '3.4':4,'5.1':4,'5.3':4,'5.4':4,'5.5':4,'8.1':4,
+  '1.1':3,'1.3':3,'2.4':3,'3.1':3,'3.2':3,'3.3':3,'3.5':3,
+  '4.1':3,'4.2':3,'4.5':3,'4.6':3,'5.2':3,'5.6':3,'5.7':3,'8.2':3,
+  '2.1':2.5,'2.2':2.5,
+  '1.2':2,'1.4':2,'2.3':2,'4.3':2,'4.4':2,'6.3':2,'6.5':2,'7.1':2,'7.2':2,'7.3':2,'8.3':2,
+};
+function getWeight(id){return WEIGHTS[id]??1.5}
 function statusScore(s){return s==='green'?100:s==='amber'?50:0}
-const MINI_CALLS=[['c1','c2'],['c3','c4'],['c5','c6'],['c7','c8'],['c9','c10'],['c11','c12'],['c13','c14'],['c15','c16'],['c17','c18'],['c19','c20'],['c21','c22'],['c23','c24'],['c25','c26'],['c27','c28'],['c29']];
+const MINI_CALLS=[
+  ['1.1','1.2'],['1.3','1.4'],
+  ['2.1','2.2'],['2.3','2.4'],['2.5','2.6'],['2.7','2.8'],
+  ['3.1','3.2'],['3.3','3.4'],['3.5','4.1'],
+  ['4.2','4.3'],['4.4','4.5'],['4.6','5.1'],
+  ['5.2','5.3'],['5.4','5.5'],['5.6','5.7'],
+  ['6.1','6.2'],['6.3','6.4'],['6.5','7.1'],
+  ['7.2','7.3'],
+  ['8.1','8.2'],['8.3','8.4'],
+];
 
 // === STATE ===
 let analysisResults=[],pqResults=[],e8Result=null,ymylResult=null,currentUrl='',currentHtml='';
@@ -682,32 +707,16 @@ async function startAnalysis(){
     log('YMYL: '+ymylResult,'ok');
     setProgress(18);
 
-    log('Starte 15 parallele SQEG-Mini-Calls…');
-    setProgress(18,'SQEG-Kriterien analysieren…','15 parallele KI-Anfragen…');
+    log('Starte 21 SQEG-Mini-Calls (42 Kriterien)…');
+    setProgress(18,'SQEG-Kriterien analysieren…','21 parallele KI-Anfragen…');
     const miniPromises=MINI_CALLS.map((ids,idx)=>runMiniCall(ids,htmlSnippet,currentUrl,ymylResult,effectiveKeyword,idx,ctx));
     const miniResults=await Promise.allSettled(miniPromises);
     miniResults.forEach((r,i)=>{
       if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`Call ${i+1} (${MINI_CALLS[i].join(',')}) ✓`,'ok')}
       else{log(`Call ${i+1} fehlgeschlagen: `+r.reason,'err')}
-      setProgress(18+((i+1)/15)*52);
+      setProgress(18+((i+1)/21)*52);
     });
-    setProgress(72);
-
-    log('Analysiere PQ-Erweitert (e1–e7)…');
-    setProgress(74,'PQ-Erweitert…','e1–e7 Analyse…');
-    try{pqResults=await runPqExtended(htmlSnippet,currentUrl,ymylResult,ctx);log('PQ-Erweitert abgeschlossen','ok')}
-    catch(e){log('PQ-Erweitert fehlgeschlagen: '+e.message,'err')}
-    setProgress(86);
-
-    // Needs Met: GSC Top-Keyword als Fallback
-    const nmKeyword=effectiveKeyword||(gscData?.keywords?.[0]?.query||'');
-    if(nmKeyword){
-      log('Needs Met (e8) für: '+nmKeyword);
-      setProgress(88,'Needs Met…','e8 Analyse…');
-      try{e8Result=await runNeedsMet(htmlSnippet,currentUrl,nmKeyword,gscData,serpData);log('Needs Met: '+(e8Result?.rating||'–'),'ok')}
-      catch(e){log('Needs Met fehlgeschlagen: '+e.message,'err')}
-    }
-    setProgress(95,'Ergebnisse rendern…','Fast fertig…');
+    setProgress(92,'Ergebnisse rendern…','Fast fertig…');
     renderResults(keyword);
     setProgress(100,'Fertig!','Analyse abgeschlossen.');
     setTimeout(()=>{
@@ -784,35 +793,12 @@ async function classifyYmyl(htmlSnippet,url){
 async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx,ctx={}){
   const criteriaList=ids.map(id=>{const c=CRITERIA.find(x=>x.id===id);return`${c.id} · ${c.name} · ${c.ref}`}).join('\n');
   const ymylHint=ymyl==='clear_ymyl'?'YMYL: Klar YMYL – erhöhte Qualitätsanforderungen.':ymyl==='mixed_ymyl'?'YMYL: Teilweise YMYL – erhöhte Sorgfalt.':'';
-  const sys=`Du bist ein Google Search Quality Evaluator (SQEG November 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array. Kein Text davor oder danach.\nFormat je Objekt: {"id":"c1","category":"A: Seitenzweck","criterion":"Name","sqeg_ref":"Sek. X.X","status":"green|amber|red","finding":"Beleg: [Signal aus HTML] | Regel: [WENN-Bedingung] | Bewertung: [Urteil]","improvement":"[konkreter Vorschlag, leer wenn green]","confidence":80}`;
+  const sys=`Du bist ein Google Search Quality Evaluator (SQEG September 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array. Kein Text davor oder danach.\nFormat je Objekt: {"id":"1.1","category":"1: Seitenzweck & Seitentyp","criterion":"Name","sqeg_ref":"Sek. X.X","status":"green|amber|red","finding":"Beleg: [Signal aus HTML] | Regel: [WENN-Bedingung] | Bewertung: [Urteil]","improvement":"[konkreter Vorschlag, leer wenn green]","confidence":80}`;
   const contextParts=(ctx.ctxBlock||'')+(ctx.serpBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
   const msg=`URL: ${url}\nSeitentext (vollst\u00e4ndig):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}${contextParts}\n\nZu bewertende Kriterien:\n${criteriaList}`;
   const text=await callApi([{role:'user',content:msg}],sys,2000);
   const m=text.match(/\[[\s\S]*\]/);
   if(!m)throw new Error('Kein JSON-Array in Call '+(idx+1));
-  return JSON.parse(m[0]);
-}
-
-// === PQ EXTENDED ===
-async function runPqExtended(htmlSnippet,url,ymyl,ctx={}){
-  const criteriaList=PQ_CRITERIA.map(c=>`${c.id} · ${c.name} · ${c.ref}`).join('\n');
-  const sys=`Du bist ein Google Search Quality Evaluator (SQEG November 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array.\nFormat: {"id":"e1","name":"Name","status":"green|amber|red","finding":"Befund","improvement":"Vorschlag"}`;
-  const contextParts=(ctx.ctxBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
-  const text=await callApi([{role:'user',content:`URL: ${url}\nSeitentext (50.000 Zeichen):\n${htmlSnippet.substring(0,50000)}${contextParts}\n\nKriterien:\n${criteriaList}`}],sys,2000);
-  const m=text.match(/\[[\s\S]*\]/);
-  if(!m)throw new Error('Kein JSON in PQ-Erweitert');
-  return JSON.parse(m[0]);
-}
-
-// === NEEDS MET ===
-async function runNeedsMet(htmlSnippet,url,keyword,gsc=null,serp=null){
-  const sys=`Du bist ein Google Search Quality Evaluator. Bewerte Needs Met (e8).\nAntworte NUR als JSON: {"rating":"FullyM|HighlyM|ModeratelyM|SlightlyM|FailsM","score":100,"finding":"Begründung"}\nSkala: FullyM=100, HighlyM=80, ModeratelyM=55, SlightlyM=30, FailsM=10`;
-  let ctx='';
-  if(gsc?.keywords?.length){const top=gsc.keywords.slice(0,5);ctx+='\n\nGSC Top-Keywords (90 Tage):\n'+top.map(k=>`• ${k.query}: ${k.clicks} Klicks, Ø-Pos ${k.position}`).join('\n');}
-  if(serp?.tasks?.[0]?.result?.[0]?.items){const items=serp.tasks[0].result[0].items.filter(i=>i.type==='organic').slice(0,5);if(items.length)ctx+='\n\nSERP Top 5 für "'+keyword+'":\n'+items.map((i,n)=>`${n+1}. ${i.url||''} – ${i.title||''}`).join('\n');}
-  const text=await callApi([{role:'user',content:`URL: ${url}\nKeyword: ${keyword}\nSeitentext (30.000 Zeichen):\n${htmlSnippet.substring(0,30000)}${ctx}`}],sys,500);
-  const m=text.match(/\{[\s\S]*\}/);
-  if(!m)throw new Error('Kein JSON in Needs Met');
   return JSON.parse(m[0]);
 }
 
@@ -823,11 +809,13 @@ function calcScore(){
   return tw>0?ts/tw:0;
 }
 function scoreToLevel(s){
-  if(s>=87)return'Highest';if(s>=73)return'High';if(s>=60)return'Medium+';if(s>=47)return'Medium';if(s>=30)return'Low';return'Lowest';
+  if(s>=85)return'Highest';if(s>=70)return'High';if(s>=50)return'Medium';if(s>=30)return'Low';return'Lowest';
 }
 
 function renderResults(keyword){
-  const score=calcScore(),level=scoreToLevel(score);
+  const score=calcScore();
+  const hasLowestSignal=analysisResults.some(r=>getWeight(r.id)>=4&&r.status==='red');
+  const level=hasLowestSignal?'Lowest':scoreToLevel(score);
   const g=analysisResults.filter(r=>r.status==='green').length;
   const a=analysisResults.filter(r=>r.status==='amber').length;
   const r=analysisResults.filter(r=>r.status==='red').length;
@@ -845,13 +833,18 @@ function renderResults(keyword){
   document.getElementById('cnt-g').textContent=g;
   document.getElementById('cnt-a').textContent=a;
   document.getElementById('cnt-r').textContent=r;
-  document.getElementById('cnt-pq').textContent=pqResults.length||7;
+  document.getElementById('cnt-pq').textContent=analysisResults.filter(r=>r.id.startsWith('5.')).length||7;
 
   document.querySelectorAll('.sqeg-level').forEach(el=>el.classList.toggle('active',el.dataset.level===level));
 
-  if(e8Result&&keyword){
+  const nmResults=analysisResults.filter(r=>r.id.startsWith('8.'));
+  if(nmResults.length){
     document.getElementById('needs-met-block').style.display='block';
-    document.querySelectorAll('.nm-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.nm===e8Result.rating));
+    document.getElementById('needs-met-scale').innerHTML=nmResults.map(r=>{
+      const cr=CRITERIA.find(x=>x.id===r.id)||{name:r.id};
+      const sym=r.status==='green'?'✓':r.status==='amber'?'◑':'✗';
+      return`<div class="priority-item" style="margin:0;padding:4px 0"><div class="pri-dot ${r.status}">${sym}</div><span style="font-size:12px">${escHtml(cr.name)}</span></div>`;
+    }).join('');
   }
   renderPriorityMatrix();
   renderCriteriaTable(analysisResults,'all');
@@ -905,18 +898,22 @@ function renderCriteriaTable(results,filter){
 
 function renderPqCards(){
   const c=document.getElementById('pq-cards');
-  if(!pqResults.length){c.innerHTML='<div style="color:var(--text3);font-size:13px;grid-column:1/-1">PQ-Erweitert wird nach der Analyse angezeigt.</div>';return}
-  c.innerHTML=pqResults.map(r=>{
-    const pq=PQ_CRITERIA.find(x=>x.id===r.id)||{name:r.name||r.id,ref:''};
+  const cluster5=analysisResults.filter(r=>r.id.startsWith('5.'));
+  if(!cluster5.length){c.innerHTML='<div style="color:var(--text3);font-size:13px;grid-column:1/-1">Sicherheits-Checks werden nach der Analyse angezeigt.</div>';return}
+  c.innerHTML=cluster5.map(r=>{
+    const crit=CRITERIA.find(x=>x.id===r.id)||{name:r.id,ref:r.sqeg_ref||''};
     const sym=r.status==='green'?'✓':r.status==='amber'?'◑':'✗';
-    return`<div class="pq-card"><div class="pq-card-header"><div class="status-dot ${r.status}">${sym}</div><div><div class="pq-card-id">${escHtml(r.id)} · ${escHtml(pq.ref)}</div><div class="pq-card-name">${escHtml(pq.name)}</div></div></div><div class="pq-card-body">${escHtml(r.finding||'')}${r.improvement?`<div class="suggest" style="margin-top:8px">💡 ${escHtml(r.improvement)}</div>`:''}</div></div>`;
+    return`<div class="pq-card"><div class="pq-card-header"><div class="status-dot ${r.status}">${sym}</div><div><div class="pq-card-id">${escHtml(r.id)} · ${escHtml(crit.ref)}</div><div class="pq-card-name">${escHtml(crit.name)}</div></div></div><div class="pq-card-body">${escHtml(r.finding||'')}${r.improvement?`<div class="suggest" style="margin-top:8px">💡 ${escHtml(r.improvement)}</div>`:''}</div></div>`;
   }).join('');
 }
 
 // === EXPORT ===
 function exportHtml(){
-  const score=calcScore(),level=scoreToLevel(score);
-  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>SQEG Analyse – ${escHtml(currentUrl)}</title><style>body{font-family:sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#1a1917}h1{font-size:22px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #e3e2df;padding-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th,td{text-align:left;padding:10px 12px;border:1px solid #e3e2df;font-size:13px}th{background:#f8f7f5;font-weight:700}.green{color:#15803d}.amber{color:#b45309}.red{color:#dc2626}.suggest{background:#f0f0ff;padding:6px 10px;border-left:3px solid #4338ca;margin-top:4px;font-size:12px}@media print{body{margin:0}}</style></head><body><h1>SQEG Analyse: ${escHtml(currentUrl)}</h1><p>Score: ${Math.round(score)}% · Stufe: ${escHtml(level)} · YMYL: ${escHtml(ymylResult||'none')} · ${new Date().toLocaleDateString('de-DE')}</p><h2>Kriterien c1–c29</h2><table><thead><tr><th>ID</th><th>Kriterium</th><th>Status</th><th>Befund</th><th>Verbesserung</th></tr></thead><tbody>${analysisResults.map(r=>`<tr><td>${escHtml(r.id)}</td><td>${escHtml(r.criterion||r.id)}</td><td class="${r.status}">${r.status}</td><td>${escHtml(r.finding||'')}</td><td>${r.improvement?`<div class="suggest">${escHtml(r.improvement)}</div>`:''}</td></tr>`).join('')}</tbody></table><h2>PQ-Erweitert e1–e7</h2><table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Befund</th></tr></thead><tbody>${pqResults.map(r=>`<tr><td>${escHtml(r.id)}</td><td>${escHtml(r.name||r.id)}</td><td class="${r.status}">${r.status}</td><td>${escHtml(r.finding||'')}</td></tr>`).join('')}</tbody></table>${e8Result?`<h2>Needs Met (e8)</h2><p><strong>${escHtml(e8Result.rating)}</strong>: ${escHtml(e8Result.finding||'')}</p>`:''}</body></html>`;
+  const score=calcScore();
+  const hasLowestSignal=analysisResults.some(r=>getWeight(r.id)>=4&&r.status==='red');
+  const level=hasLowestSignal?'Lowest':scoreToLevel(score);
+  const cluster5=analysisResults.filter(r=>r.id.startsWith('5.'));
+  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>SQEG Analyse – ${escHtml(currentUrl)}</title><style>body{font-family:sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#1a1917}h1{font-size:22px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #e3e2df;padding-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th,td{text-align:left;padding:10px 12px;border:1px solid #e3e2df;font-size:13px}th{background:#f8f7f5;font-weight:700}.green{color:#15803d}.amber{color:#b45309}.red{color:#dc2626}.suggest{background:#f0f0ff;padding:6px 10px;border-left:3px solid #4338ca;margin-top:4px;font-size:12px}@media print{body{margin:0}}</style></head><body><h1>SQEG Analyse: ${escHtml(currentUrl)}</h1><p>Score: ${Math.round(score)}% · PQ-Stufe: ${escHtml(level)} · YMYL: ${escHtml(ymylResult||'none')} · ${new Date().toLocaleDateString('de-DE')}</p><h2>42 Kriterien (1.1–8.4) · SQEG September 2025</h2><table><thead><tr><th>ID</th><th>Cluster</th><th>Kriterium</th><th>Status</th><th>Befund</th><th>Verbesserung</th></tr></thead><tbody>${analysisResults.map(r=>{const crit=CRITERIA.find(c=>c.id===r.id)||{cat:'',name:r.criterion||r.id};return`<tr><td>${escHtml(r.id)}</td><td>${escHtml(crit.cat)}</td><td>${escHtml(crit.name)}</td><td class="${r.status}">${r.status}</td><td>${escHtml(r.finding||'')}</td><td>${r.improvement?`<div class="suggest">${escHtml(r.improvement)}</div>`:''}</td></tr>`}).join('')}</tbody></table>${cluster5.length?`<h2>Cluster 5 — Schaden &amp; Täuschung (Kritische Signale)</h2><table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Befund</th></tr></thead><tbody>${cluster5.map(r=>{const crit=CRITERIA.find(c=>c.id===r.id)||{name:r.id};return`<tr><td>${escHtml(r.id)}</td><td>${escHtml(crit.name)}</td><td class="${r.status}">${r.status}</td><td>${escHtml(r.finding||'')}</td></tr>`}).join('')}</tbody></table>`:''}</body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
 }
 
