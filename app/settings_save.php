@@ -61,6 +61,55 @@ if ($action === 'save_model') {
     }
 }
 
+if ($action === 'save_openai') {
+    $key   = trim($_POST['openai_api_key'] ?? '');
+    $model = trim($_POST['openai_model'] ?? '');
+    if (!empty($key) && !str_starts_with($key, 'sk-')) {
+        $errors[] = 'OpenAI API-Key muss mit "sk-" beginnen.';
+    } else {
+        if (!empty($key)) $settings['openai_api_key'] = $key;
+        if (!empty($model)) $settings['openai_model'] = $model;
+    }
+}
+
+if ($action === 'save_dataforseo') {
+    $login    = trim($_POST['dataforseo_login'] ?? '');
+    $password = trim($_POST['dataforseo_password'] ?? '');
+    if (!empty($login) && !filter_var($login, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'DataForSEO Login muss eine gültige E-Mail-Adresse sein.';
+    } else {
+        if (!empty($login))    $settings['dataforseo_login']    = $login;
+        if (!empty($password)) $settings['dataforseo_password'] = $password;
+    }
+}
+
+if ($action === 'save_pagespeed') {
+    $key = trim($_POST['pagespeed_api_key'] ?? '');
+    // PageSpeed Key hat kein festes Präfix — nur Länge prüfen
+    if (!empty($key) && strlen($key) < 10) {
+        $errors[] = 'PageSpeed API-Key scheint ungültig zu sein.';
+    } else {
+        $settings['pagespeed_api_key'] = $key;
+    }
+}
+
+if ($action === 'save_gsc') {
+    $siteUrl = trim($_POST['gsc_site_url'] ?? '');
+    $saJson  = trim($_POST['gsc_service_account_json'] ?? '');
+    if (!empty($siteUrl)) {
+        $settings['gsc_site_url'] = $siteUrl;
+    }
+    if (!empty($saJson)) {
+        // Validierung: muss gültiges JSON mit den Pflichtfeldern sein
+        $sa = json_decode($saJson, true);
+        if (!is_array($sa) || empty($sa['client_email']) || empty($sa['private_key'])) {
+            $errors[] = 'Service-Account-JSON ungültig. Pflichtfelder: client_email, private_key.';
+        } else {
+            $settings['gsc_service_account_json'] = $saJson;
+        }
+    }
+}
+
 if (!empty($errors)) {
     http_response_code(422);
     echo json_encode(['error' => implode(' ', $errors)]);

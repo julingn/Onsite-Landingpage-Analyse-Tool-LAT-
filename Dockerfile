@@ -1,7 +1,8 @@
 FROM php:8.3-cli-alpine
 
-RUN apk add --no-cache curl-dev libcurl \
-    && docker-php-ext-install curl
+RUN apk add --no-cache curl-dev libcurl openssl-dev \
+    && docker-php-ext-install curl \
+    && docker-php-ext-enable openssl || true
 
 WORKDIR /app
 COPY . .
