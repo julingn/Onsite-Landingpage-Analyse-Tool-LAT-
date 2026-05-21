@@ -1,15 +1,22 @@
-const express = require('express');
+const http = require('http');
+const fs = require('fs');
 const path = require('path');
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+const server = http.createServer((req, res) => {
+  const filePath = path.join(__dirname, 'public', 'index.html');
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Error: ' + err.message);
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(data);
+  });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`LAT server running on 0.0.0.0:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on 0.0.0.0:${PORT}`);
 });
