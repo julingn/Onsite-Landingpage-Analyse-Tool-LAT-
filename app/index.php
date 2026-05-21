@@ -582,6 +582,7 @@ const MINI_CALLS=[['c1','c2'],['c3','c4'],['c5','c6'],['c7','c8'],['c9','c10'],[
 
 // === STATE ===
 let analysisResults=[],pqResults=[],e8Result=null,ymylResult=null,currentUrl='',currentHtml='';
+let gscData=null,serpData=null,backlinkData=null,psiData=null;
 
 // === LOG / PROGRESS ===
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -615,6 +616,7 @@ async function startAnalysis(){
   document.getElementById('results-section').style.display='none';
   document.getElementById('log-box').innerHTML='';
   analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
+  gscData=null;serpData=null;backlinkData=null;psiData=null;
   setProgress(0,'Analyse startet…','Vorbereitung…');
   showTool('sqeg');
 
@@ -638,34 +640,68 @@ async function startAnalysis(){
     }
     setProgress(8);
     const htmlSnippet=currentHtml.substring(0,12000);
+    const effectiveKeyword=keyword||'';
+
+    // Externe Daten parallel abrufen (Fehler blockieren nicht)
+    setProgress(8,'Daten abrufen…','GSC · SERP · Backlinks · PageSpeed…');
+    const [gscRes,serpRes,blRes,psiRes]=await Promise.allSettled([
+      currentMode==='url'&&currentUrl?fetchGscData(currentUrl):Promise.resolve(null),
+      effectiveKeyword?fetchSerpData(effectiveKeyword):Promise.resolve(null),
+      currentMode==='url'&&currentUrl?fetchBacklinkData(currentUrl):Promise.resolve(null),
+      currentMode==='url'&&currentUrl?fetchPageSpeedData(currentUrl):Promise.resolve(null),
+    ]);
+    gscData     = gscRes.status==='fulfilled'?gscRes.value:null;
+    serpData    = serpRes.status==='fulfilled'?serpRes.value:null;
+    backlinkData= blRes.status==='fulfilled'?blRes.value:null;
+    psiData     = psiRes.status==='fulfilled'?psiRes.value:null;
+
+    if(gscData?.keywords?.length)log(`GSC: ${gscData.keywords.length} Keywords geladen`,'ok');
+    else log('GSC: keine Daten (nicht konfiguriert oder keine Treffer)');
+    if(serpData?.tasks?.[0]?.result?.[0]?.items)log(`SERP: Top-10 für "${effectiveKeyword}" geladen`,'ok');
+    else if(effectiveKeyword)log(`SERP: keine Daten für "${effectiveKeyword}"`);
+    if(backlinkData?.tasks?.[0]?.result?.[0])log('Backlinks: Profil geladen','ok');
+    else log('Backlinks: keine Daten');
+    if(psiData?.success)log(`PageSpeed: Score ${psiData.perf_score}/100 (Mobile)`,'ok');
+    else if(currentMode==='url')log('PageSpeed: keine Daten');
+    setProgress(14);
+
+    // Kontext-Blöcke bauen
+    const ctx={
+      ctxBlock:    buildCtxBlock(effectiveKeyword,gscData),
+      serpBlock:   buildSerpBlock(serpData,effectiveKeyword),
+      backlinkBlock: buildBacklinkBlock(backlinkData),
+      psiBlock:    buildPsiBlock(psiData),
+    };
 
     log('Klassifiziere YMYL…');
-    setProgress(10,'YMYL klassifizieren…','YMYL-Analyse…');
+    setProgress(15,'YMYL klassifizieren…','YMYL-Analyse…');
     ymylResult=await classifyYmyl(htmlSnippet,currentUrl);
     log('YMYL: '+ymylResult,'ok');
-    setProgress(15);
+    setProgress(18);
 
     log('Starte 15 parallele SQEG-Mini-Calls…');
-    setProgress(15,'SQEG-Kriterien analysieren…','15 parallele KI-Anfragen…');
-    const miniPromises=MINI_CALLS.map((ids,idx)=>runMiniCall(ids,htmlSnippet,currentUrl,ymylResult,keyword,idx));
+    setProgress(18,'SQEG-Kriterien analysieren…','15 parallele KI-Anfragen…');
+    const miniPromises=MINI_CALLS.map((ids,idx)=>runMiniCall(ids,htmlSnippet,currentUrl,ymylResult,effectiveKeyword,idx,ctx));
     const miniResults=await Promise.allSettled(miniPromises);
     miniResults.forEach((r,i)=>{
       if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`Call ${i+1} (${MINI_CALLS[i].join(',')}) ✓`,'ok')}
       else{log(`Call ${i+1} fehlgeschlagen: `+r.reason,'err')}
-      setProgress(15+((i+1)/15)*55);
+      setProgress(18+((i+1)/15)*52);
     });
-    setProgress(70);
+    setProgress(72);
 
     log('Analysiere PQ-Erweitert (e1–e7)…');
-    setProgress(72,'PQ-Erweitert…','e1–e7 Analyse…');
-    try{pqResults=await runPqExtended(htmlSnippet,currentUrl,ymylResult);log('PQ-Erweitert abgeschlossen','ok')}
+    setProgress(74,'PQ-Erweitert…','e1–e7 Analyse…');
+    try{pqResults=await runPqExtended(htmlSnippet,currentUrl,ymylResult,ctx);log('PQ-Erweitert abgeschlossen','ok')}
     catch(e){log('PQ-Erweitert fehlgeschlagen: '+e.message,'err')}
-    setProgress(85);
+    setProgress(86);
 
-    if(keyword){
-      log('Needs Met (e8) für: '+keyword);
-      setProgress(87,'Needs Met…','e8 Analyse…');
-      try{e8Result=await runNeedsMet(htmlSnippet,currentUrl,keyword);log('Needs Met: '+(e8Result?.rating||'–'),'ok')}
+    // Needs Met: GSC Top-Keyword als Fallback
+    const nmKeyword=effectiveKeyword||(gscData?.keywords?.[0]?.query||'');
+    if(nmKeyword){
+      log('Needs Met (e8) für: '+nmKeyword);
+      setProgress(88,'Needs Met…','e8 Analyse…');
+      try{e8Result=await runNeedsMet(htmlSnippet,currentUrl,nmKeyword,gscData,serpData);log('Needs Met: '+(e8Result?.rating||'–'),'ok')}
       catch(e){log('Needs Met fehlgeschlagen: '+e.message,'err')}
     }
     setProgress(95,'Ergebnisse rendern…','Fast fertig…');
@@ -694,6 +730,43 @@ async function callApi(messages,systemPrompt,maxTokens=2000){
   return data.content?.[0]?.text??'';
 }
 
+// === DATEN-FETCH ===
+async function fetchGscData(url){
+  try{const res=await fetch('gsc.php?action=data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});const d=await res.json();return d.success?d:null;}catch(e){return null;}
+}
+async function fetchSerpData(keyword){
+  try{const res=await fetch('dataforseo.php?action=serp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keyword,limit:10})});return await res.json();}catch(e){return null;}
+}
+async function fetchBacklinkData(url){
+  try{const res=await fetch('dataforseo.php?action=backlinks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:url})});return await res.json();}catch(e){return null;}
+}
+async function fetchPageSpeedData(url){
+  try{const res=await fetch('pagespeed.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,strategy:'mobile'})});return await res.json();}catch(e){return null;}
+}
+
+// === KONTEXT-BLÖCKE ===
+function buildCtxBlock(keyword,gsc){
+  let b='';
+  if(keyword)b+=`\nZiel-Keyword: ${keyword}`;
+  if(gsc?.keywords?.length){const top=gsc.keywords.slice(0,10);b+='\n\nGSC-Keyword-Performance (90 Tage):\n'+top.map(k=>`• ${k.query}: ${k.clicks} Klicks, ${k.impressions} Imp., CTR ${k.ctr}%, Pos. ${k.position}`).join('\n');}
+  return b;
+}
+function buildSerpBlock(serp,keyword){
+  if(!serp?.tasks?.[0]?.result?.[0]?.items)return'';
+  const items=serp.tasks[0].result[0].items.filter(i=>i.type==='organic').slice(0,10);
+  if(!items.length)return'';
+  return`\n\nSERP-Benchmark für "${keyword}" (Top ${items.length}):\n`+items.map((i,n)=>`${n+1}. ${i.url||i.relative_url||''} – ${i.title||''}${i.description?'\n   '+i.description.substring(0,100):''}`).join('\n');
+}
+function buildBacklinkBlock(bl){
+  const r=bl?.tasks?.[0]?.result?.[0];
+  if(!r)return'';
+  return`\n\nBacklink-Profil:\n• Domain Rank: ${r.rank||'–'}\n• Referring Domains: ${r.referring_domains||'–'}\n• Backlinks: ${r.backlinks||'–'}\n• Spam Score: ${r.spam_score||0}%`;
+}
+function buildPsiBlock(psi){
+  if(!psi?.success)return'';
+  return`\n\nPageSpeed Mobile:\n• Score: ${psi.perf_score||'–'}/100\n• LCP: ${psi.lcp||'–'} · CLS: ${psi.cls||'–'} · TBT: ${psi.tbt||'–'} · FCP: ${psi.fcp||'–'}`;
+}
+
 // === YMYL ===
 async function classifyYmyl(htmlSnippet,url){
   const sys=`Du bist ein Google Search Quality Evaluator. Klassifiziere den YMYL-Status der Seite.\nAntworte NUR mit einem dieser drei Werte (kein weiterer Text): clear_ymyl | mixed_ymyl | none\nYMYL-Kategorien: Finanzen, Medizin/Gesundheit, Recht, Sicherheit, große Kaufentscheidungen, Neuigkeiten/gesellschaftliche Themen, Kinderschutz.`;
@@ -705,11 +778,12 @@ async function classifyYmyl(htmlSnippet,url){
 }
 
 // === MINI CALLS ===
-async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx){
+async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx,ctx={}){
   const criteriaList=ids.map(id=>{const c=CRITERIA.find(x=>x.id===id);return`${c.id} · ${c.name} · ${c.ref}`}).join('\n');
   const ymylHint=ymyl==='clear_ymyl'?'YMYL: Klar YMYL – erhöhte Qualitätsanforderungen.':ymyl==='mixed_ymyl'?'YMYL: Teilweise YMYL – erhöhte Sorgfalt.':'';
   const sys=`Du bist ein Google Search Quality Evaluator (SQEG November 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array. Kein Text davor oder danach.\nFormat je Objekt: {"id":"c1","category":"A: Seitenzweck","criterion":"Name","sqeg_ref":"Sek. X.X","status":"green|amber|red","finding":"Beleg: [Signal aus HTML] | Regel: [WENN-Bedingung] | Bewertung: [Urteil]","improvement":"[konkreter Vorschlag, leer wenn green]","confidence":80}`;
-  const msg=`URL: ${url}\nHTML-Ausschnitt (12.000 Zeichen):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}\n\nZu bewertende Kriterien:\n${criteriaList}`;
+  const contextParts=(ctx.ctxBlock||'')+(ctx.serpBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
+  const msg=`URL: ${url}\nHTML-Ausschnitt (12.000 Zeichen):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}${contextParts}\n\nZu bewertende Kriterien:\n${criteriaList}`;
   const text=await callApi([{role:'user',content:msg}],sys,2000);
   const m=text.match(/\[[\s\S]*\]/);
   if(!m)throw new Error('Kein JSON-Array in Call '+(idx+1));
@@ -717,19 +791,23 @@ async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx){
 }
 
 // === PQ EXTENDED ===
-async function runPqExtended(htmlSnippet,url,ymyl){
+async function runPqExtended(htmlSnippet,url,ymyl,ctx={}){
   const criteriaList=PQ_CRITERIA.map(c=>`${c.id} · ${c.name} · ${c.ref}`).join('\n');
   const sys=`Du bist ein Google Search Quality Evaluator (SQEG November 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array.\nFormat: {"id":"e1","name":"Name","status":"green|amber|red","finding":"Befund","improvement":"Vorschlag"}`;
-  const text=await callApi([{role:'user',content:`URL: ${url}\nHTML (8000 Zeichen):\n${htmlSnippet.substring(0,8000)}\n\nKriterien:\n${criteriaList}`}],sys,2000);
+  const contextParts=(ctx.ctxBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
+  const text=await callApi([{role:'user',content:`URL: ${url}\nHTML (8000 Zeichen):\n${htmlSnippet.substring(0,8000)}${contextParts}\n\nKriterien:\n${criteriaList}`}],sys,2000);
   const m=text.match(/\[[\s\S]*\]/);
   if(!m)throw new Error('Kein JSON in PQ-Erweitert');
   return JSON.parse(m[0]);
 }
 
 // === NEEDS MET ===
-async function runNeedsMet(htmlSnippet,url,keyword){
+async function runNeedsMet(htmlSnippet,url,keyword,gsc=null,serp=null){
   const sys=`Du bist ein Google Search Quality Evaluator. Bewerte Needs Met (e8).\nAntworte NUR als JSON: {"rating":"FullyM|HighlyM|ModeratelyM|SlightlyM|FailsM","score":100,"finding":"Begründung"}\nSkala: FullyM=100, HighlyM=80, ModeratelyM=55, SlightlyM=30, FailsM=10`;
-  const text=await callApi([{role:'user',content:`URL: ${url}\nKeyword: ${keyword}\nHTML (6000 Zeichen):\n${htmlSnippet.substring(0,6000)}`}],sys,500);
+  let ctx='';
+  if(gsc?.keywords?.length){const top=gsc.keywords.slice(0,5);ctx+='\n\nGSC Top-Keywords (90 Tage):\n'+top.map(k=>`• ${k.query}: ${k.clicks} Klicks, Ø-Pos ${k.position}`).join('\n');}
+  if(serp?.tasks?.[0]?.result?.[0]?.items){const items=serp.tasks[0].result[0].items.filter(i=>i.type==='organic').slice(0,5);if(items.length)ctx+='\n\nSERP Top 5 für "'+keyword+'":\n'+items.map((i,n)=>`${n+1}. ${i.url||''} – ${i.title||''}`).join('\n');}
+  const text=await callApi([{role:'user',content:`URL: ${url}\nKeyword: ${keyword}\nHTML (6000 Zeichen):\n${htmlSnippet.substring(0,6000)}${ctx}`}],sys,500);
   const m=text.match(/\{[\s\S]*\}/);
   if(!m)throw new Error('Kein JSON in Needs Met');
   return JSON.parse(m[0]);
