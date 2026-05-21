@@ -410,6 +410,10 @@ button{font-family:inherit}
       <div class="needs-met-label">Cluster 8 · Needs Met (Suchabsicht)</div>
       <div id="needs-met-scale"></div>
     </div>
+    <div class="needs-met-block" id="gsc-panel" style="display:none">
+      <div class="needs-met-label">GSC · Top-Keywords (90 Tage)</div>
+      <div id="gsc-panel-content"></div>
+    </div>
     <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">Prioritäten-Matrix</span><div class="section-divider-line"></div></div>
     <div class="priority-matrix">
       <div class="priority-col"><div class="priority-col-header red">🔴 Sofort angehen</div><div id="pri-sofort"></div></div>
@@ -593,6 +597,15 @@ const WEIGHTS={
   '1.2':2,'1.4':2,'2.3':2,'4.3':2,'4.4':2,'6.3':2,'6.5':2,'7.1':2,'7.2':2,'7.3':2,'8.3':2,
 };
 function getWeight(id){return WEIGHTS[id]??1.5}
+const YMYL_ESCALATION={'2.4':1,'3.2':1,'3.5':1,'4.3':1,'4.4':1};
+function getEffectiveWeight(id){
+  const base=getWeight(id);
+  const esc=YMYL_ESCALATION[id];
+  if(!esc)return base;
+  if(ymylResult==='clear_ymyl')return base+esc;
+  if(ymylResult==='mixed_ymyl')return base+esc*0.5;
+  return base;
+}
 function statusScore(s){return s==='green'?100:s==='amber'?50:0}
 const MINI_CALLS=[
   ['1.1','1.2'],['1.3','1.4'],
@@ -712,8 +725,9 @@ async function startAnalysis(){
     const miniPromises=MINI_CALLS.map((ids,idx)=>runMiniCall(ids,htmlSnippet,currentUrl,ymylResult,effectiveKeyword,idx,ctx));
     const miniResults=await Promise.allSettled(miniPromises);
     miniResults.forEach((r,i)=>{
-      if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`Call ${i+1} (${MINI_CALLS[i].join(',')}) ✓`,'ok')}
-      else{log(`Call ${i+1} fehlgeschlagen: `+r.reason,'err')}
+      const names=MINI_CALLS[i].map(id=>CRITERIA.find(c=>c.id===id)?.name||id).join(' · ');
+      if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`✓ ${names}`,'ok')}
+      else{log(`✗ ${names}: `+r.reason,'err')}
       setProgress(18+((i+1)/21)*52);
     });
     setProgress(92,'Ergebnisse rendern…','Fast fertig…');
@@ -820,7 +834,7 @@ async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx,ctx={}){
 // === RENDERING ===
 function calcScore(){
   let tw=0,ts=0;
-  analysisResults.forEach(r=>{const w=getWeight(r.id);tw+=w;ts+=statusScore(r.status)*w});
+  analysisResults.forEach(r=>{const w=getEffectiveWeight(r.id);tw+=w;ts+=statusScore(r.status)*w});
   return tw>0?ts/tw:0;
 }
 function scoreToLevel(s){
@@ -829,7 +843,7 @@ function scoreToLevel(s){
 
 function renderResults(keyword){
   const score=calcScore();
-  const hasLowestSignal=analysisResults.some(r=>getWeight(r.id)>=4&&r.status==='red');
+  const hasLowestSignal=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
   const level=hasLowestSignal?'Lowest':scoreToLevel(score);
   const g=analysisResults.filter(r=>r.status==='green').length;
   const a=analysisResults.filter(r=>r.status==='amber').length;
@@ -861,6 +875,20 @@ function renderResults(keyword){
       return`<div class="priority-item" style="margin:0;padding:4px 0"><div class="pri-dot ${r.status}">${sym}</div><span style="font-size:12px">${escHtml(cr.name)}</span></div>`;
     }).join('');
   }
+  const gscPanel=document.getElementById('gsc-panel');
+  if(gscData?.keywords?.length){
+    gscPanel.style.display='block';
+    const top=gscData.keywords.slice(0,15);
+    const maxClicks=Math.max(...top.map(k=>k.clicks),1);
+    document.getElementById('gsc-panel-content').innerHTML=
+      '<table style="width:100%;font-size:12px;border-collapse:collapse">'
+      +'<thead><tr style="color:var(--text3);font-size:11px"><th style="text-align:left;padding:3px 8px 3px 0">Keyword</th><th style="text-align:right;padding:3px 4px">Klicks</th><th style="text-align:right;padding:3px 4px">Imp.</th><th style="text-align:right;padding:3px 4px">CTR</th><th style="text-align:right;padding:3px 4px">Pos.</th></tr></thead>'
+      +'<tbody>'+top.map(k=>{
+        const bar=Math.round((k.clicks/maxClicks)*60);
+        const posColor=k.position<=3?'var(--green)':k.position<=10?'var(--amber)':'var(--text3)';
+        return`<tr><td style="padding:3px 8px 3px 0"><span style="display:inline-block;width:${bar}px;height:4px;background:var(--blue);border-radius:2px;vertical-align:middle;margin-right:6px"></span>${escHtml(k.query)}</td><td style="text-align:right;padding:3px 4px">${k.clicks}</td><td style="text-align:right;padding:3px 4px">${k.impressions}</td><td style="text-align:right;padding:3px 4px">${k.ctr}%</td><td style="text-align:right;padding:3px 4px;color:${posColor};font-weight:600">${k.position}</td></tr>`;
+      }).join('')+'</tbody></table>';
+  }else{gscPanel.style.display='none';}
   renderPriorityMatrix();
   renderCriteriaTable(analysisResults,'all');
   renderPqCards();
@@ -871,7 +899,7 @@ function renderPriorityMatrix(){
   s.innerHTML=q.innerHTML=m.innerHTML='';
   analysisResults.forEach(r=>{
     if(r.status==='green')return;
-    const w=getWeight(r.id);
+    const w=getEffectiveWeight(r.id);
     const crit=CRITERIA.find(c=>c.id===r.id)||{name:r.criterion||r.id};
     const name=crit.name.length>50?crit.name.substring(0,50)+'…':crit.name;
     const effort=w>=4?'Hoch':w>=3?'Mittel':'Niedrig';
@@ -925,7 +953,7 @@ function renderPqCards(){
 // === EXPORT ===
 function exportHtml(){
   const score=calcScore();
-  const hasLowestSignal=analysisResults.some(r=>getWeight(r.id)>=4&&r.status==='red');
+  const hasLowestSignal=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
   const level=hasLowestSignal?'Lowest':scoreToLevel(score);
   const cluster5=analysisResults.filter(r=>r.id.startsWith('5.'));
   const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>SQEG Analyse – ${escHtml(currentUrl)}</title><style>body{font-family:sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#1a1917}h1{font-size:22px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #e3e2df;padding-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th,td{text-align:left;padding:10px 12px;border:1px solid #e3e2df;font-size:13px}th{background:#f8f7f5;font-weight:700}.green{color:#15803d}.amber{color:#b45309}.red{color:#dc2626}.suggest{background:#f0f0ff;padding:6px 10px;border-left:3px solid #4338ca;margin-top:4px;font-size:12px}@media print{body{margin:0}}</style></head><body><h1>SQEG Analyse: ${escHtml(currentUrl)}</h1><p>Score: ${Math.round(score)}% · PQ-Stufe: ${escHtml(level)} · YMYL: ${escHtml(ymylResult||'none')} · ${new Date().toLocaleDateString('de-DE')}</p><h2>42 Kriterien (1.1–8.4) · SQEG September 2025</h2><table><thead><tr><th>ID</th><th>Cluster</th><th>Kriterium</th><th>Status</th><th>Befund</th><th>Verbesserung</th></tr></thead><tbody>${analysisResults.map(r=>{const crit=CRITERIA.find(c=>c.id===r.id)||{cat:'',name:r.criterion||r.id};return`<tr><td>${escHtml(r.id)}</td><td>${escHtml(crit.cat)}</td><td>${escHtml(crit.name)}</td><td class="${r.status}">${r.status}</td><td>${escHtml(r.finding||'')}</td><td>${r.improvement?`<div class="suggest">${escHtml(r.improvement)}</div>`:''}</td></tr>`}).join('')}</tbody></table>${cluster5.length?`<h2>Cluster 5 — Schaden &amp; Täuschung (Kritische Signale)</h2><table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Befund</th></tr></thead><tbody>${cluster5.map(r=>{const crit=CRITERIA.find(c=>c.id===r.id)||{name:r.id};return`<tr><td>${escHtml(r.id)}</td><td>${escHtml(crit.name)}</td><td class="${r.status}">${r.status}</td><td>${escHtml(r.finding||'')}</td></tr>`}).join('')}</tbody></table>`:''}</body></html>`;
