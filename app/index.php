@@ -639,7 +639,10 @@ async function startAnalysis(){
       log('HTML manuell eingefügt ('+( currentHtml.length/1024).toFixed(1)+' KB)','ok');
     }
     setProgress(8);
-    const htmlSnippet=currentHtml.substring(0,12000);
+    const pageText=extractPageText(currentHtml);
+    log(`Seitentext extrahiert: ${(pageText.length/1024).toFixed(0)} KB (von ${(currentHtml.length/1024).toFixed(0)} KB HTML)`,'ok');
+    // Vollst\u00e4ndiger Text f\u00fcr Prompts (max. 80.000 Zeichen \u2248 20K Tokens)
+    const htmlSnippet=pageText.substring(0,80000);
     const effectiveKeyword=keyword||'';
 
     // Externe Daten parallel abrufen (Fehler blockieren nicht)
@@ -770,7 +773,7 @@ function buildPsiBlock(psi){
 // === YMYL ===
 async function classifyYmyl(htmlSnippet,url){
   const sys=`Du bist ein Google Search Quality Evaluator. Klassifiziere den YMYL-Status der Seite.\nAntworte NUR mit einem dieser drei Werte (kein weiterer Text): clear_ymyl | mixed_ymyl | none\nYMYL-Kategorien: Finanzen, Medizin/Gesundheit, Recht, Sicherheit, große Kaufentscheidungen, Neuigkeiten/gesellschaftliche Themen, Kinderschutz.`;
-  const r=await callApi([{role:'user',content:`URL: ${url}\nHTML (3000 Zeichen):\n${htmlSnippet.substring(0,3000)}`}],sys,50);
+  const r=await callApi([{role:'user',content:`URL: ${url}\nSeitentext (3000 Zeichen):\n${htmlSnippet.substring(0,3000)}`}],sys,50);
   const c=r.trim().toLowerCase();
   if(c.includes('clear_ymyl'))return 'clear_ymyl';
   if(c.includes('mixed_ymyl'))return 'mixed_ymyl';
@@ -783,7 +786,7 @@ async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx,ctx={}){
   const ymylHint=ymyl==='clear_ymyl'?'YMYL: Klar YMYL – erhöhte Qualitätsanforderungen.':ymyl==='mixed_ymyl'?'YMYL: Teilweise YMYL – erhöhte Sorgfalt.':'';
   const sys=`Du bist ein Google Search Quality Evaluator (SQEG November 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array. Kein Text davor oder danach.\nFormat je Objekt: {"id":"c1","category":"A: Seitenzweck","criterion":"Name","sqeg_ref":"Sek. X.X","status":"green|amber|red","finding":"Beleg: [Signal aus HTML] | Regel: [WENN-Bedingung] | Bewertung: [Urteil]","improvement":"[konkreter Vorschlag, leer wenn green]","confidence":80}`;
   const contextParts=(ctx.ctxBlock||'')+(ctx.serpBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
-  const msg=`URL: ${url}\nHTML-Ausschnitt (12.000 Zeichen):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}${contextParts}\n\nZu bewertende Kriterien:\n${criteriaList}`;
+  const msg=`URL: ${url}\nSeitentext (vollst\u00e4ndig):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}${contextParts}\n\nZu bewertende Kriterien:\n${criteriaList}`;
   const text=await callApi([{role:'user',content:msg}],sys,2000);
   const m=text.match(/\[[\s\S]*\]/);
   if(!m)throw new Error('Kein JSON-Array in Call '+(idx+1));
@@ -795,7 +798,7 @@ async function runPqExtended(htmlSnippet,url,ymyl,ctx={}){
   const criteriaList=PQ_CRITERIA.map(c=>`${c.id} · ${c.name} · ${c.ref}`).join('\n');
   const sys=`Du bist ein Google Search Quality Evaluator (SQEG November 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array.\nFormat: {"id":"e1","name":"Name","status":"green|amber|red","finding":"Befund","improvement":"Vorschlag"}`;
   const contextParts=(ctx.ctxBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'');
-  const text=await callApi([{role:'user',content:`URL: ${url}\nHTML (8000 Zeichen):\n${htmlSnippet.substring(0,8000)}${contextParts}\n\nKriterien:\n${criteriaList}`}],sys,2000);
+  const text=await callApi([{role:'user',content:`URL: ${url}\nSeitentext (50.000 Zeichen):\n${htmlSnippet.substring(0,50000)}${contextParts}\n\nKriterien:\n${criteriaList}`}],sys,2000);
   const m=text.match(/\[[\s\S]*\]/);
   if(!m)throw new Error('Kein JSON in PQ-Erweitert');
   return JSON.parse(m[0]);
@@ -807,7 +810,7 @@ async function runNeedsMet(htmlSnippet,url,keyword,gsc=null,serp=null){
   let ctx='';
   if(gsc?.keywords?.length){const top=gsc.keywords.slice(0,5);ctx+='\n\nGSC Top-Keywords (90 Tage):\n'+top.map(k=>`• ${k.query}: ${k.clicks} Klicks, Ø-Pos ${k.position}`).join('\n');}
   if(serp?.tasks?.[0]?.result?.[0]?.items){const items=serp.tasks[0].result[0].items.filter(i=>i.type==='organic').slice(0,5);if(items.length)ctx+='\n\nSERP Top 5 für "'+keyword+'":\n'+items.map((i,n)=>`${n+1}. ${i.url||''} – ${i.title||''}`).join('\n');}
-  const text=await callApi([{role:'user',content:`URL: ${url}\nKeyword: ${keyword}\nHTML (6000 Zeichen):\n${htmlSnippet.substring(0,6000)}${ctx}`}],sys,500);
+  const text=await callApi([{role:'user',content:`URL: ${url}\nKeyword: ${keyword}\nSeitentext (30.000 Zeichen):\n${htmlSnippet.substring(0,30000)}${ctx}`}],sys,500);
   const m=text.match(/\{[\s\S]*\}/);
   if(!m)throw new Error('Kein JSON in Needs Met');
   return JSON.parse(m[0]);
