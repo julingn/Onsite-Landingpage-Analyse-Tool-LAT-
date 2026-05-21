@@ -1,0 +1,14 @@
+{
+  "name": "lat-landingpage-analyse-tool",
+  "version": "1.0.0",
+  "description": "Onsite Landingpage Analyse Tool",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
