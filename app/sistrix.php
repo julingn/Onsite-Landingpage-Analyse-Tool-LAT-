@@ -155,16 +155,14 @@ if ($action === 'url_data') {
     curl_multi_close($multi);
 
     // ── domain.visibilityindex parsen ──
-    $visResult  = $raw['domain.visibilityindex']['answer'][0]['result'][0] ?? null;
-    $visibility = null;
-    if ($visResult) {
-        $vis        = $visResult['value'] ?? $visResult['sichtbarkeitsindex'] ?? null;
-        $visibility = $vis !== null ? round((float)$vis, 4) : null;
-    }
+    // Struktur: answer[0]['sichtbarkeitsindex'][0]['value']
+    $visEntry   = $raw['domain.visibilityindex']['answer'][0]['sichtbarkeitsindex'][0] ?? null;
+    $visibility = $visEntry ? round((float)($visEntry['value'] ?? 0), 4) : null;
 
     // ── domain.kwcount.seo parsen ──
-    $kwcResult = $raw['domain.kwcount.seo']['answer'][0]['result'][0] ?? null;
-    $kwCount   = $kwcResult ? (int)($kwcResult['value'] ?? $kwcResult['kwcount.seo'] ?? 0) : null;
+    // Struktur: answer[0]['kwcount.seo'][0]['value']
+    $kwcEntry = $raw['domain.kwcount.seo']['answer'][0]['kwcount.seo'][0] ?? null;
+    $kwCount  = $kwcEntry ? (int)($kwcEntry['value'] ?? 0) : null;
 
     // ── keyword.domain.seo parsen ──
     // Struktur: answer[0]['result'] — flache Felder: kw, position, traffic
@@ -187,10 +185,6 @@ if ($action === 'url_data') {
         'kw_count'   => $kwCount,
         'keywords'   => $keywords,
         'no_data'    => ($visibility === null && empty($keywords)),
-        '_dbg'       => ($visibility === null) ? [
-            'vis_raw' => $raw['domain.visibilityindex']['answer'][0]['result'][0] ?? $raw['domain.visibilityindex'] ?? null,
-            'kwc_raw' => $raw['domain.kwcount.seo']['answer'][0]['result'][0]     ?? $raw['domain.kwcount.seo']     ?? null,
-        ] : null,
     ]);
     exit;
 }
