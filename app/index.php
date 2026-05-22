@@ -106,8 +106,12 @@ button{font-family:inherit}
 [data-theme="dark"] .theme-btn .icon-sun{display:block}
 [data-theme="dark"] .theme-btn .icon-moon{display:none}
 .main-content{margin-left:220px;flex:1;min-width:0;background:var(--bg2)}
-.workspace-header{height:64px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;position:sticky;top:0;z-index:50}
-.workspace-header-inner{max-width:960px;margin:0 auto;padding:0 32px;display:flex;align-items:center;width:100%;gap:12px}
+.workspace-header{border-bottom:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;align-items:stretch;position:sticky;top:0;z-index:50;padding-bottom:14px}
+.workspace-header-inner{max-width:960px;margin:0 auto;padding:0 32px;display:flex;align-items:center;width:100%;gap:12px;height:52px;flex-shrink:0}
+.workspace-header-form{max-width:960px;margin:0 auto;padding:0 32px;width:100%}
+.header-input-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.header-action-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.workspace-header-form.input-dimmed{opacity:.4;pointer-events:none;transition:opacity .3s}
 .workspace-title{font-size:14px;font-weight:600;color:var(--text)}
 .workspace-divider{width:1px;height:16px;background:var(--border2);flex-shrink:0}
 .workspace-subtitle{font-size:12px;color:var(--text3)}
@@ -183,27 +187,8 @@ button{font-family:inherit}
   box-shadow:var(--shadow-sm);
 }
 .input-card.input-dimmed{opacity:.4;pointer-events:none;transition:opacity .3s}
-#panel-sqeg>.input-card:not(.input-hero){border-left:4px solid var(--accent);padding:28px 28px 24px}
+#panel-sqeg>.input-card{border-left:4px solid var(--accent);padding:28px 28px 24px}
 #progress-section .input-card{background:var(--bg3);border-color:var(--border);border-style:dashed;box-shadow:none;padding:16px 20px;margin-bottom:12px}
-/* === INPUT HERO === */
-.input-hero{
-  margin:0 -32px;padding:24px 32px 20px;
-  background:var(--bg2);border:none;border-bottom:1px solid var(--border);
-  border-radius:0;box-shadow:none;margin-bottom:20px;
-  position:sticky;top:64px;z-index:49;
-  transition:padding .25s cubic-bezier(.4,0,.2,1),box-shadow .25s;
-}
-.input-hero.condensed{padding-top:12px;padding-bottom:12px;box-shadow:0 4px 20px rgba(15,23,42,.1)}
-[data-theme="dark"] .input-hero.condensed{box-shadow:0 4px 20px rgba(0,0,0,.5)}
-.input-hero-toolbar{
-  display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;
-  overflow:hidden;max-height:60px;opacity:1;transition:max-height .25s,opacity .2s,margin .25s;
-}
-.input-hero.condensed .input-hero-toolbar{max-height:0;opacity:0;margin-bottom:0;pointer-events:none}
-.input-hero .context-toggle{overflow:hidden;max-height:40px;opacity:1;transition:max-height .25s,opacity .2s,margin .25s;}
-.input-hero.condensed .context-toggle{max-height:0;opacity:0;pointer-events:none}
-.input-hero.condensed .context-fields{display:none!important}
-@media(max-width:768px){.input-hero{margin:0;border-radius:0}}
 .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .card-icon{
   width:38px;height:38px;background:var(--accent-bg);border:1px solid var(--accent-border);
@@ -508,31 +493,17 @@ button{font-family:inherit}
     <span class="workspace-divider"></span>
     <span class="workspace-subtitle">Google Search Quality Evaluator Guidelines</span>
   </div>
-</header>
-<div class="container">
-<div class="tool-panel active" id="panel-sqeg">
-  <div class="input-card input-hero" id="input-hero">
-    <div class="input-hero-toolbar">
-      <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Vorschau mit Beispieldaten">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
-        Demo
-      </button>
+  <div class="workspace-header-form" id="header-form">
+    <div class="header-input-row">
+      <input type="text" id="url-input" class="url-input" placeholder="URL der Landingpage eingeben" autocomplete="off" spellcheck="false">
       <div class="mode-toggle">
         <button class="mode-btn active" id="mode-url" onclick="setMode('url')">URL</button>
         <button class="mode-btn" id="mode-html" onclick="setMode('html')">HTML</button>
       </div>
     </div>
-    <div class="input-row">
-      <input type="text" id="url-input" class="url-input" placeholder="URL der Landingpage eingeben" autocomplete="off" spellcheck="false">
-      <button class="btn-start" id="btn-start" onclick="startAnalysis()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Analyse starten
-      </button>
-    </div>
-    <div id="html-textarea-wrap" style="display:none;margin-top:10px">
+    <div id="html-textarea-wrap" style="display:none;margin-top:8px">
       <textarea id="html-textarea" class="html-textarea" placeholder="HTML-Quellcode hier einfügen…"></textarea>
     </div>
-    <div id="url-display" class="url-display"></div>
     <button class="context-toggle" onclick="toggleContext()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       Analyse verfeinern
@@ -551,7 +522,20 @@ button{font-family:inherit}
         <input type="text" id="ctx-audience" class="ctx-input" placeholder="z.B. Frauen 35–50">
       </div>
     </div>
+    <div class="header-action-row">
+      <button class="btn-start" id="btn-start" onclick="startAnalysis()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Analyse starten
+      </button>
+      <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Vorschau mit Beispieldaten">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Demo
+      </button>
+    </div>
   </div>
+</header>
+<div class="container">
+<div class="tool-panel active" id="panel-sqeg">
 
   <div id="progress-section" style="display:none">
     <div class="input-card">
@@ -993,7 +977,7 @@ async function startDemo(){
   document.getElementById('exec-summary-content').style.display='none';
   document.getElementById('exec-summary-loading').style.display='flex';
   document.getElementById('btn-demo').disabled=true;
-  document.querySelector('#panel-sqeg > .input-card').classList.add('input-dimmed');
+  document.getElementById('header-form').classList.add('input-dimmed');
   document.getElementById('progress-section').style.display='block';
   document.getElementById('progress-bar-wrap').style.display='block';
   document.getElementById('loader-wrap').style.display='block';
@@ -1070,7 +1054,7 @@ async function startAnalysis(){
   document.getElementById('exec-summary-loading').style.display='flex';
   document.getElementById('btn-start').disabled=true;
   document.getElementById('btn-demo').disabled=true;
-  document.querySelector('#panel-sqeg > .input-card').classList.add('input-dimmed');
+  document.getElementById('header-form').classList.add('input-dimmed');
   document.getElementById('progress-section').style.display='block';
   document.getElementById('progress-bar-wrap').style.display='block';
   document.getElementById('loader-wrap').style.display='block';
@@ -1484,7 +1468,7 @@ Global-Regeln:
 }
 
 function renderResults(keyword){
-  document.querySelector('#panel-sqeg > .input-card').classList.remove('input-dimmed');
+  document.getElementById('header-form').classList.remove('input-dimmed');
   const score=calcScore();
   const hasLowestSignal=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
   const level=hasLowestSignal?'Lowest':scoreToLevel(score);
@@ -1798,14 +1782,6 @@ function saveDemoSetting(checked){
 loadDemoSetting();
 const _dmCb=document.getElementById('setting-dark-mode');
 if(_dmCb)_dmCb.checked=document.documentElement.getAttribute('data-theme')==='dark';
-// === INPUT HERO SCROLL ===
-(function(){
-  var hero=document.getElementById('input-hero');
-  if(!hero)return;
-  window.addEventListener('scroll',function(){
-    hero.classList.toggle('condensed',window.scrollY>72);
-  },{passive:true});
-})();
 </script>
 </body>
 </html>
