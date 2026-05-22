@@ -183,8 +183,27 @@ button{font-family:inherit}
   box-shadow:var(--shadow-sm);
 }
 .input-card.input-dimmed{opacity:.4;pointer-events:none;transition:opacity .3s}
-#panel-sqeg>.input-card{border-left:4px solid var(--accent);padding:28px 28px 24px}
+#panel-sqeg>.input-card:not(.input-hero){border-left:4px solid var(--accent);padding:28px 28px 24px}
 #progress-section .input-card{background:var(--bg3);border-color:var(--border);border-style:dashed;box-shadow:none;padding:16px 20px;margin-bottom:12px}
+/* === INPUT HERO === */
+.input-hero{
+  margin:0 -32px;padding:24px 32px 20px;
+  background:var(--bg2);border:none;border-bottom:1px solid var(--border);
+  border-radius:0;box-shadow:none;margin-bottom:20px;
+  position:sticky;top:64px;z-index:49;
+  transition:padding .25s cubic-bezier(.4,0,.2,1),box-shadow .25s;
+}
+.input-hero.condensed{padding-top:12px;padding-bottom:12px;box-shadow:0 4px 20px rgba(15,23,42,.1)}
+[data-theme="dark"] .input-hero.condensed{box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.input-hero-toolbar{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;
+  overflow:hidden;max-height:60px;opacity:1;transition:max-height .25s,opacity .2s,margin .25s;
+}
+.input-hero.condensed .input-hero-toolbar{max-height:0;opacity:0;margin-bottom:0;pointer-events:none}
+.input-hero .context-toggle{overflow:hidden;max-height:40px;opacity:1;transition:max-height .25s,opacity .2s,margin .25s;}
+.input-hero.condensed .context-toggle{max-height:0;opacity:0;pointer-events:none}
+.input-hero.condensed .context-fields{display:none!important}
+@media(max-width:768px){.input-hero{margin:0;border-radius:0}}
 .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .card-icon{
   width:38px;height:38px;background:var(--accent-bg);border:1px solid var(--accent-border);
@@ -488,24 +507,15 @@ button{font-family:inherit}
 </header>
 <div class="container">
 <div class="tool-panel active" id="panel-sqeg">
-  <div class="input-card">
-    <div class="card-header">
-      <div class="card-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-      <div>
-        <div class="card-title">SQEG Analyzer</div>
-        <div class="card-sub">Google Search Quality Evaluator Guidelines · Nov 2025</div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Vorschau mit Beispieldaten">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
-          Demo
-        </button>
-        <div class="mode-toggle">
-          <button class="mode-btn active" id="mode-url" onclick="setMode('url')">URL</button>
-          <button class="mode-btn" id="mode-html" onclick="setMode('html')">HTML</button>
-        </div>
+  <div class="input-card input-hero" id="input-hero">
+    <div class="input-hero-toolbar">
+      <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Vorschau mit Beispieldaten">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Demo
+      </button>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-url" onclick="setMode('url')">URL</button>
+        <button class="mode-btn" id="mode-html" onclick="setMode('html')">HTML</button>
       </div>
     </div>
     <div class="input-row">
@@ -1674,6 +1684,14 @@ function saveDemoSetting(checked){
 loadDemoSetting();
 const _dmCb=document.getElementById('setting-dark-mode');
 if(_dmCb)_dmCb.checked=document.documentElement.getAttribute('data-theme')==='dark';
+// === INPUT HERO SCROLL ===
+(function(){
+  var hero=document.getElementById('input-hero');
+  if(!hero)return;
+  window.addEventListener('scroll',function(){
+    hero.classList.toggle('condensed',window.scrollY>72);
+  },{passive:true});
+})();
 </script>
 </body>
 </html>
