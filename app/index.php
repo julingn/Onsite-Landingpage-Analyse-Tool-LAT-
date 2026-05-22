@@ -362,6 +362,21 @@ button{font-family:inherit}
 .finding-rule{font-size:12px;font-style:italic;color:var(--text2);margin-bottom:4px}
 .finding-verdict{font-size:12px;font-weight:600;color:var(--text)}
 .suggest{margin-top:6px;padding:8px 12px;background:var(--amber-bg);border-left:2px solid var(--amber-border);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:12px;color:var(--text2);line-height:1.5}
+/* Executive Summary */
+.exec-summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.exec-summary-header{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.exec-summary-header svg{color:var(--accent);flex-shrink:0}
+.exec-summary-title{font-size:14px;font-weight:700;color:var(--text)}
+.exec-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.exec-summary-section{background:var(--bg3);border-radius:var(--radius);padding:14px 16px}
+.exec-summary-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:10px}
+.exec-summary-score{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.4}
+.exec-summary-interpretation{font-size:12px;color:var(--text2);line-height:1.6}
+.exec-summary-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:12px;color:var(--text2);line-height:1.5}
+.exec-summary-item:last-child{margin-bottom:0}
+.exec-summary-bullet{font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;color:var(--red)}
+.exec-summary-num{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.exec-summary-loading{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13px;padding:4px 0}
 .pq-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
 .pq-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s}
 .pq-card:hover{box-shadow:var(--shadow-md);border-color:var(--border2)}
@@ -522,6 +537,18 @@ button{font-family:inherit}
     </div>
     <!-- hidden legacy badge (used by JS) -->
     <div id="score-badge" style="display:none"></div>
+    <!-- Executive Summary -->
+    <div class="exec-summary-card" id="exec-summary" style="display:none">
+      <div class="exec-summary-header">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span class="exec-summary-title">Executive Summary</span>
+      </div>
+      <div class="exec-summary-loading" id="exec-summary-loading">
+        <div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div>
+        <span>Zusammenfassung wird erstellt…</span>
+      </div>
+      <div id="exec-summary-content" style="display:none"></div>
+    </div>
     <div class="stat-grid">
       <div class="stat-box green"><div class="stat-num" id="cnt-g">0</div><div class="stat-lbl">✓ Bestanden</div></div>
       <div class="stat-box amber"><div class="stat-num" id="cnt-a">0</div><div class="stat-lbl">◑ Verbesserungswürdig</div></div>
@@ -767,6 +794,7 @@ const MINI_CALLS=[
 
 // === STATE ===
 let analysisResults=[],pqResults=[],e8Result=null,ymylResult=null,currentUrl='',currentHtml='';
+let isDemoMode=false;
 let gscData=null,serpData=null,backlinkData=null,psiData=null;
 let analysisStartTime=0,timerInterval=null,lastPct=0;
 
@@ -841,7 +869,10 @@ const DEMO_RESULTS=[
 ];
 
 async function startDemo(){
-  document.getElementById('btn-start').disabled=true;
+  isDemoMode=true;
+  document.getElementById('exec-summary').style.display='none';
+  document.getElementById('exec-summary-content').style.display='none';
+  document.getElementById('exec-summary-loading').style.display='flex';
   document.getElementById('btn-demo').disabled=true;
   document.getElementById('progress-section').style.display='block';
   document.getElementById('progress-bar-wrap').style.display='block';
@@ -913,6 +944,10 @@ async function startAnalysis(){
   if(currentMode==='url'&&!urlVal){alert('Bitte eine URL eingeben.');return}
   if(currentMode==='html'&&!htmlVal){alert('Bitte HTML einfügen.');return}
 
+  isDemoMode=false;
+  document.getElementById('exec-summary').style.display='none';
+  document.getElementById('exec-summary-content').style.display='none';
+  document.getElementById('exec-summary-loading').style.display='flex';
   document.getElementById('btn-start').disabled=true;
   document.getElementById('btn-demo').disabled=true;
   document.getElementById('progress-section').style.display='block';
@@ -1167,6 +1202,102 @@ function scoreToLevel(s){
   if(s>=85)return'Highest';if(s>=70)return'High';if(s>=50)return'Medium';if(s>=30)return'Low';return'Lowest';
 }
 
+// === EXECUTIVE SUMMARY ===
+function renderExecSummary({bewertung,interpretation,probleme,schritte}){
+  document.getElementById('exec-summary-loading').style.display='none';
+  const c=document.getElementById('exec-summary-content');
+  c.innerHTML=`<div class="exec-summary-grid">
+    <div class="exec-summary-section">
+      <div class="exec-summary-section-title">Gesamtbewertung</div>
+      <div class="exec-summary-score">${escHtml(bewertung)}</div>
+      <div class="exec-summary-interpretation">${escHtml(interpretation)}</div>
+    </div>
+    <div class="exec-summary-section">
+      <div class="exec-summary-section-title">Hauptprobleme</div>
+      ${probleme.map(p=>{const d=p.split(/\s*[–-]\s*/,2);return`<div class="exec-summary-item"><span class="exec-summary-bullet">✗</span><span><strong>${escHtml(d[0]||'')}</strong>${d[1]?' – '+escHtml(d[1]):''}</span></div>`;}).join('')}
+    </div>
+    <div class="exec-summary-section">
+      <div class="exec-summary-section-title">Empfohlene nächste Schritte</div>
+      ${schritte.map((s,i)=>`<div class="exec-summary-item"><span class="exec-summary-num">${i+1}</span><span>${escHtml(s)}</span></div>`).join('')}
+    </div>
+  </div>`;
+  c.style.display='block';
+  document.getElementById('exec-summary').style.display='block';
+}
+
+function parseExecSummary(text){
+  const bm=text.match(/Gesamtbewertung:\s*\n(.+)\n([\s\S]*?)(?=\n\s*Hauptprobleme:|$)/i);
+  const pm=text.match(/Hauptprobleme:\s*\n([\s\S]*?)(?=\n\s*Empfohlene nächste Schritte:|$)/i);
+  const sm=text.match(/Empfohlene nächste Schritte:\s*\n([\s\S]*?)$/i);
+  return{
+    bewertung:(bm?bm[1]:'').trim(),
+    interpretation:(bm?bm[2]:'').trim(),
+    probleme:(pm?pm[1]:'').split('\n').map(l=>l.replace(/^[•\-\*]\s*/,'')).filter(l=>l.trim()).slice(0,3),
+    schritte:(sm?sm[1]:'').split('\n').map(l=>l.replace(/^\d+\.\s*/,'')).filter(l=>l.trim()).slice(0,3),
+  };
+}
+
+async function generateExecSummary(){
+  document.getElementById('exec-summary').style.display='block';
+  // Demo mode: static data, no API call
+  if(isDemoMode){
+    renderExecSummary({
+      bewertung:'62 / 100 – Mittelmäßige Qualität mit erheblichem Verbesserungspotenzial',
+      interpretation:'Die Seite erfüllt grundlegende Vertrauens- und Sicherheitsanforderungen, weist jedoch kritische Schwächen bei Inhaltsqualität, Expertise-Nachweisen und Core Web Vitals auf.',
+      probleme:[
+        'Fehlende E-E-A-T-Signale – Kein Autor identifizierbar, keine fachlichen Referenzen; für eine transaktionale Kaufentscheidungsseite ein erheblicher Vertrauensverlust.',
+        'Veraltete und fehlerhafte Inhalte – Tarifdaten aus 2023 mit teils falschen Preisen; Nutzer treffen Entscheidungen auf Basis inkorrekter Daten.',
+        'Kritische Core Web Vitals – LCP, CLS und TBT alle im roten Bereich; Nutzererfahrung und organisches Ranking direkt beeinträchtigt.',
+      ],
+      schritte:[
+        'Autorenprofil einführen – Namentliche redaktionelle Verantwortung und Quellenangaben zu Bundesnetzagentur-Daten ergänzen.',
+        'Datenaktualität sicherstellen – Automatisierten Preis-Sync oder wöchentlichen Review-Prozess für alle Tarifdaten einrichten.',
+        'Core Web Vitals optimieren – Bilder in WebP, Lazy Loading und JavaScript-Defer als erste technische Maßnahmen priorisieren.',
+      ],
+    });
+    return;
+  }
+  // Real analysis: build context and call AI
+  const score=Math.round(calcScore());
+  const hasLowest=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
+  const level=hasLowest?'Lowest':scoreToLevel(score);
+  const reds=analysisResults.filter(r=>r.status==='red').sort((a,b)=>getEffectiveWeight(b.id)-getEffectiveWeight(a.id));
+  const ambers=analysisResults.filter(r=>r.status==='amber').sort((a,b)=>getEffectiveWeight(b.id)-getEffectiveWeight(a.id));
+  const greens=analysisResults.filter(r=>r.status==='green').sort((a,b)=>getEffectiveWeight(b.id)-getEffectiveWeight(a.id));
+  const fmtCrit=arr=>arr.slice(0,6).map(r=>{
+    const c=CRITERIA.find(x=>x.id===r.id)||{};
+    const verdict=(r.finding||'').split('|').pop().replace(/^Bewertung:\s*/,'').trim();
+    return`- ${c.name}: ${verdict}${r.improvement?' → '+r.improvement:''}`;
+  }).join('\n');
+  const sys=`Du bist ein UX- und SEO-Experte. Erstelle eine prägnante Executive Summary für die vorliegende SQEG-Website-Analyse.
+Antworte AUSSCHLIESSLICH in diesem Format – keine Einleitung, kein Abschlusstext:
+
+Gesamtbewertung:
+[Score / 100 – verbale Einordnung]
+[1–2 Sätze fachliche Interpretation]
+
+Hauptprobleme:
+• [Problem – warum problematisch, 1 Satz]
+• [Problem – warum problematisch, 1 Satz]
+• [Problem – warum problematisch, 1 Satz]
+
+Empfohlene nächste Schritte:
+1. [Konkrete Maßnahme]
+2. [Konkrete Maßnahme]
+3. [Konkrete Maßnahme]
+
+Regeln: Max. 3 Punkte pro Liste. Klare einfache Sprache. Keine Rohdaten-Wiederholung. Kompakt und scannbar.`;
+  const msg=`URL: ${currentUrl}\nScore: ${score} / 100 – ${level}\nYMYL: ${ymylResult||'none'}\n\nProbleme (rot, nach Gewicht):\n${fmtCrit(reds)}\n\nVerbesserungspotenziale (amber):\n${fmtCrit(ambers)}\n\nPositive Aspekte:\n${greens.slice(0,4).map(r=>(CRITERIA.find(x=>x.id===r.id)||{}).name||r.id).join(', ')}`;
+  try{
+    const text=await callApi([{role:'user',content:msg}],sys,700);
+    renderExecSummary(parseExecSummary(text));
+  }catch(e){
+    document.getElementById('exec-summary-loading').style.display='none';
+    document.getElementById('exec-summary-content').innerHTML=`<div style="color:var(--text3);font-size:13px">Executive Summary konnte nicht erstellt werden.</div>`;
+    document.getElementById('exec-summary-content').style.display='block';
+  }
+}
+
 function renderResults(keyword){
   const score=calcScore();
   const hasLowestSignal=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
@@ -1227,6 +1358,7 @@ function renderResults(keyword){
   renderClusterOverview();
   renderCriteriaTable(analysisResults,'all');
   renderPqCards();
+  generateExecSummary();
 }
 
 function renderClusterOverview(){
