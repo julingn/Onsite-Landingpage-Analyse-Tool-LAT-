@@ -7,7 +7,7 @@
  *
  * Actions (via ?action=...):
  *   test         GET  → Verbindungstest (credits)
- *   url_data     POST → Visibility + Top-Keywords für eine URL { url, csrf_token }
+ *   url_data     POST → Visibility + Top-Keywords für eine URL via domain.overview + keyword.domain.seo { url, csrf_token }
  */
 
 session_start();
@@ -117,7 +117,7 @@ if ($action === 'url_data') {
     $multi   = curl_multi_init();
     $base    = ['api_key' => $apiKey, 'format' => 'json', 'country' => 'de', 'url' => $url];
 
-    foreach (['url.overview' => [], 'url.keywords' => ['num' => 20]] as $ep => $extra) {
+    foreach (['domain.overview' => [], 'keyword.domain.seo' => ['limit' => 20]] as $ep => $extra) {
         $params = array_merge($base, $extra);
         $epUrl  = 'https://api.sistrix.com/' . $ep . '?' . http_build_query($params);
         $ch     = curl_init($epUrl);
@@ -145,26 +145,27 @@ if ($action === 'url_data') {
     }
     curl_multi_close($multi);
 
-    // ── url.overview parsen ──
-    $overview   = $raw['url.overview']['answer'][0]['url.overview'][0] ?? null;
+    // ── domain.overview parsen ──
+    $overview   = $raw['domain.overview']['answer'][0]['domain.overview'][0] ?? null;
     $visibility = null;
     $kwCount    = null;
     if ($overview) {
         $visTxt     = $overview['sichtbarkeitsindex'][0]['#text'] ?? null;
         $visibility = $visTxt !== null ? round((float)$visTxt, 4) : null;
-        $kwTxt      = $overview['kwcount.sem.100'][0]['#text'] ?? null;
+        $kwTxt      = $overview['kwcount.seo'][0]['#text'] ?? null;
         $kwCount    = $kwTxt !== null ? (int)$kwTxt : null;
     }
 
-    // ── url.keywords parsen ──
-    $kwData   = $raw['url.keywords']['answer'][0]['url.keywords'][0] ?? null;
+    // ── keyword.domain.seo parsen ──
+    $kwItems  = $raw['keyword.domain.seo']['answer'][0]['keyword.domain.seo'] ?? [];
     $keywords = [];
-    if ($kwData && !empty($kwData['keyword'])) {
-        foreach (array_slice($kwData['keyword'], 0, 20) as $kw) {
+    if (is_array($kwItems)) {
+        foreach (array_slice($kwItems, 0, 20) as $kw) {
+            if (!is_array($kw)) continue;
             $keywords[] = [
-                'keyword'  => (string)($kw['@kw']     ?? ''),
-                'position' => (int)($kw['@pos']        ?? 0),
-                'volume'   => (int)($kw['@volume']     ?? 0),
+                'keyword'  => (string)($kw['@kw']       ?? ''),
+                'position' => (int)($kw['@position']    ?? 0),
+                'volume'   => (int)($kw['@traffic']     ?? 0),
             ];
         }
     }
