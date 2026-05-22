@@ -376,6 +376,10 @@ button{font-family:inherit}
 .exec-summary-item:last-child{margin-bottom:0}
 .exec-summary-bullet{font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;color:var(--red)}
 .exec-summary-num{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.exec-summary-problem{margin-bottom:10px}
+.exec-summary-problem:last-child{margin-bottom:0}
+.exec-summary-problem-label{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:2px}
+.exec-summary-problem-arrow{font-size:12px;color:var(--text2);line-height:1.5;padding-left:14px}
 .exec-summary-loading{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13px;padding:4px 0}
 .pq-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
 .pq-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s}
@@ -1214,7 +1218,11 @@ function renderExecSummary({bewertung,interpretation,probleme,schritte}){
     </div>
     <div class="exec-summary-section">
       <div class="exec-summary-section-title">Hauptprobleme</div>
-      ${probleme.map(p=>{const d=p.split(/\s*[–-]\s*/,2);return`<div class="exec-summary-item"><span class="exec-summary-bullet">✗</span><span><strong>${escHtml(d[0]||'')}</strong>${d[1]?' – '+escHtml(d[1]):''}</span></div>`;}).join('')}
+      ${probleme.map(p=>{
+        const label=typeof p==='object'?p.label:p;
+        const expl=typeof p==='object'?p.explanation:'';
+        return`<div class="exec-summary-problem"><div class="exec-summary-problem-label">✖ ${escHtml(label)}</div>${expl?`<div class="exec-summary-problem-arrow">→ ${escHtml(expl)}</div>`:''}</div>`;
+      }).join('')}
     </div>
     <div class="exec-summary-section">
       <div class="exec-summary-section-title">Empfohlene nächste Schritte</div>
@@ -1229,10 +1237,20 @@ function parseExecSummary(text){
   const bm=text.match(/Gesamtbewertung:\s*\n(.+)\n([\s\S]*?)(?=\n\s*Hauptprobleme:|$)/i);
   const pm=text.match(/Hauptprobleme:\s*\n([\s\S]*?)(?=\n\s*Empfohlene nächste Schritte:|$)/i);
   const sm=text.match(/Empfohlene nächste Schritte:\s*\n([\s\S]*?)$/i);
+  // Parse ✖/→ Zeilenpaare
+  const probLines=(pm?pm[1]:'').split('\n').map(l=>l.trim()).filter(l=>l);
+  const probleme=[];
+  for(let i=0;i<probLines.length&&probleme.length<3;i++){
+    if(/^[✖✗x]/iu.test(probLines[i])){
+      const label=probLines[i].replace(/^[✖✗x]\s*/iu,'').trim();
+      const expl=(probLines[i+1]&&/^→/.test(probLines[i+1]))?probLines[++i].replace(/^→\s*/,'').trim():'';
+      probleme.push({label,explanation:expl});
+    }
+  }
   return{
     bewertung:(bm?bm[1]:'').trim(),
     interpretation:(bm?bm[2]:'').trim(),
-    probleme:(pm?pm[1]:'').split('\n').map(l=>l.replace(/^[•\-\*]\s*/,'')).filter(l=>l.trim()).slice(0,3),
+    probleme,
     schritte:(sm?sm[1]:'').split('\n').map(l=>l.replace(/^\d+\.\s*/,'')).filter(l=>l.trim()).slice(0,3),
   };
 }
@@ -1242,17 +1260,17 @@ async function generateExecSummary(){
   // Demo mode: static data, no API call
   if(isDemoMode){
     renderExecSummary({
-      bewertung:'62 / 100 – Mittelmäßige Qualität mit erheblichem Verbesserungspotenzial',
-      interpretation:'Die Seite erfüllt grundlegende Vertrauens- und Sicherheitsanforderungen, weist jedoch kritische Schwächen bei Inhaltsqualität, Expertise-Nachweisen und Core Web Vitals auf.',
+      bewertung:'62 / 100 – Mittelmäßige Qualität',
+      interpretation:'E-E-A-T-Defizite, veraltete Tarifinhalte und schlechte Core Web Vitals bremsen Ranking und Conversion.',
       probleme:[
-        'Fehlende E-E-A-T-Signale – Kein Autor identifizierbar, keine fachlichen Referenzen; für eine transaktionale Kaufentscheidungsseite ein erheblicher Vertrauensverlust.',
-        'Veraltete und fehlerhafte Inhalte – Tarifdaten aus 2023 mit teils falschen Preisen; Nutzer treffen Entscheidungen auf Basis inkorrekter Daten.',
-        'Kritische Core Web Vitals – LCP, CLS und TBT alle im roten Bereich; Nutzererfahrung und organisches Ranking direkt beeinträchtigt.',
+        {label:'Fehlende Expertise-Nachweise',explanation:'Kein Autor sichtbar – Kaufentscheidungsseite ohne Vertrauenssignal.'},
+        {label:'Veraltete Tarifdaten',explanation:'Preise aus 2023 führen Nutzer zu falschen Entscheidungen.'},
+        {label:'Core Web Vitals kritisch',explanation:'LCP, CLS und TBT rot – Ranking und Nutzererfahrung beeinträchtigt.'},
       ],
       schritte:[
-        'Autorenprofil einführen – Namentliche redaktionelle Verantwortung und Quellenangaben zu Bundesnetzagentur-Daten ergänzen.',
-        'Datenaktualität sicherstellen – Automatisierten Preis-Sync oder wöchentlichen Review-Prozess für alle Tarifdaten einrichten.',
-        'Core Web Vitals optimieren – Bilder in WebP, Lazy Loading und JavaScript-Defer als erste technische Maßnahmen priorisieren.',
+        'Autorenprofil mit redaktioneller Verantwortung ergänzen',
+        'Automatisierten Preis-Sync oder wöchentlichen Review einrichten',
+        'Bilder in WebP, Lazy Loading und JS-Defer aktivieren',
       ],
     });
     return;
@@ -1269,24 +1287,27 @@ async function generateExecSummary(){
     const verdict=(r.finding||'').split('|').pop().replace(/^Bewertung:\s*/,'').trim();
     return`- ${c.name}: ${verdict}${r.improvement?' → '+r.improvement:''}`;
   }).join('\n');
-  const sys=`Du bist ein UX- und SEO-Experte. Erstelle eine prägnante Executive Summary für die vorliegende SQEG-Website-Analyse.
-Antworte AUSSCHLIESSLICH in diesem Format – keine Einleitung, kein Abschlusstext:
+  const sys=`Du bist ein UX-Writer und SEO-Experte. Erstelle eine hochwertige Executive Summary für die vorliegende Website-Analyse.
+Antworte AUSSCHLIESSLICH in folgendem Format – keine Einleitung, kein Abschlusstext:
 
 Gesamtbewertung:
-[Score / 100 – verbale Einordnung]
-[1–2 Sätze fachliche Interpretation]
+[X / 100 – verbale Einordnung]
+[1 kurzer Satz, der konkrete Schwächen benennt – max. 1 Zeile]
 
 Hauptprobleme:
-• [Problem – warum problematisch, 1 Satz]
-• [Problem – warum problematisch, 1 Satz]
-• [Problem – warum problematisch, 1 Satz]
+✖ [Problembezeichnung, max. 12 Wörter]
+→ [Erklärung, max. 12 Wörter]
+✖ [Problembezeichnung, max. 12 Wörter]
+→ [Erklärung, max. 12 Wörter]
+✖ [Problembezeichnung, max. 12 Wörter]
+→ [Erklärung, max. 12 Wörter]
 
 Empfohlene nächste Schritte:
-1. [Konkrete Maßnahme]
-2. [Konkrete Maßnahme]
-3. [Konkrete Maßnahme]
+1. [Konkrete Maßnahme, max. 12 Wörter, sofort umsetzbar]
+2. [Konkrete Maßnahme, max. 12 Wörter, sofort umsetzbar]
+3. [Konkrete Maßnahme, max. 12 Wörter, sofort umsetzbar]
 
-Regeln: Max. 3 Punkte pro Liste. Klare einfache Sprache. Keine Rohdaten-Wiederholung. Kompakt und scannbar.`;
+Regeln: Genau 3 Probleme (je ✖-Zeile + →-Zeile), genau 3 Maßnahmen. Keine langen Absätze. Klare, nüchterne Sprache. Keine Wiederholung von Zahlen oder KPI-Daten. Fokus auf Handlungsfähigkeit.`;
   const msg=`URL: ${currentUrl}\nScore: ${score} / 100 – ${level}\nYMYL: ${ymylResult||'none'}\n\nProbleme (rot, nach Gewicht):\n${fmtCrit(reds)}\n\nVerbesserungspotenziale (amber):\n${fmtCrit(ambers)}\n\nPositive Aspekte:\n${greens.slice(0,4).map(r=>(CRITERIA.find(x=>x.id===r.id)||{}).name||r.id).join(', ')}`;
   try{
     const text=await callApi([{role:'user',content:msg}],sys,700);
