@@ -1243,8 +1243,6 @@ function renderClusterOverview(){
   ];
   const R=36,SW=10,CX=48,CY=48;
   const circ=2*Math.PI*R;
-  const totalW=analysisResults.reduce((s,r)=>s+getEffectiveWeight(r.id),0);
-  const maxClusterW=Math.max(...clusters.map(cl=>analysisResults.filter(r=>r.id.startsWith(cl.num+'.')).reduce((s,r)=>s+getEffectiveWeight(r.id),0)));
   el.innerHTML=clusters.map(cl=>{
     const res=analysisResults.filter(r=>r.id.startsWith(cl.num+'.'));
     if(!res.length)return'';
@@ -1257,8 +1255,6 @@ function renderClusterOverview(){
     const g=res.filter(r=>r.status==='green').length;
     const a=res.filter(r=>r.status==='amber').length;
     const rd=res.filter(r=>r.status==='red').length;
-    const sharePct=totalW>0?Math.round(tw/totalW*100):0;
-    const barW=maxClusterW>0?Math.round(tw/maxClusterW*100):0;
     return`<div class="cluster-card">
       <div class="cluster-card-donut">
         <svg width="96" height="96" viewBox="0 0 96 96">
@@ -1269,16 +1265,7 @@ function renderClusterOverview(){
       </div>
       <div class="cluster-card-info">
         <div class="cluster-card-name">${escHtml(cl.name)}</div>
-        <div style="margin:6px 0 8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-            <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:600">Einfluss</span>
-            <span style="font-size:10px;font-weight:700;color:var(--text2);font-family:'Geist Mono','Courier New',monospace">${sharePct}%</span>
-          </div>
-          <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
-            <div style="height:100%;width:${barW}%;background:var(--accent);border-radius:2px;opacity:.6;transition:width .4s"></div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:3px;font-size:12px">
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:12px">
           <span style="color:var(--green)">${g} ✓ Bestanden</span>
           <span style="color:var(--amber)">${a} ◑ Verbesserbar</span>
           <span style="color:var(--red)">${rd} ✗ Fehlerhaft</span>
