@@ -340,15 +340,15 @@ button{font-family:inherit}
 .criteria-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
 .criteria-table tbody tr.crit-row{cursor:pointer;transition:background .1s}
 .criteria-table tbody tr.crit-row:hover td{background:var(--bg3)}
-.criteria-table tbody tr.crit-row.expanded td{background:var(--accent-bg);border-bottom:none}
+.criteria-table tbody tr.crit-row.expanded td{background:var(--bg3);border-bottom:none}
 .criteria-table tbody tr.crit-detail{display:none}
 .criteria-table tbody tr.crit-detail.visible{display:table-row}
-.criteria-table tbody tr.crit-detail td{background:var(--accent-bg);border-bottom:1px solid var(--accent-border);padding:0 14px 14px 54px}
-.crit-detail-inner{border-top:1px solid var(--accent-border);padding-top:12px;display:grid;gap:8px}
+.criteria-table tbody tr.crit-detail td{background:var(--bg2);border-bottom:1px solid var(--border);border-left:3px solid var(--border2);padding:0 14px 16px 24px}
+.crit-detail-inner{border-top:1px solid var(--border);padding-top:12px;display:grid;gap:10px}
 .crit-detail-row{font-size:12px;line-height:1.6}
-.crit-detail-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:2px}
+.crit-detail-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px}
 .crit-chevron{transition:transform .2s;color:var(--text3);flex-shrink:0}
-.crit-row.expanded .crit-chevron{transform:rotate(90deg)}
+.crit-row.expanded .crit-chevron{transform:rotate(180deg)}
 .status-dot{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
 .status-dot.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
 .status-dot.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
@@ -360,7 +360,7 @@ button{font-family:inherit}
 .finding-beleg{display:inline-block;background:var(--bg3);border-radius:var(--radius-sm);padding:2px 7px;font-size:11px;color:var(--text3);margin-bottom:4px}
 .finding-rule{font-size:12px;font-style:italic;color:var(--text2);margin-bottom:4px}
 .finding-verdict{font-size:12px;font-weight:600;color:var(--text)}
-.suggest{margin-top:8px;padding:8px 12px;background:var(--accent-bg);border-left:2px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:12px;color:var(--text2);line-height:1.5}
+.suggest{margin-top:6px;padding:8px 12px;background:var(--amber-bg);border-left:2px solid var(--amber-border);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:12px;color:var(--text2);line-height:1.5}
 .pq-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
 .pq-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s}
 .pq-card:hover{box-shadow:var(--shadow-md);border-color:var(--border2)}
@@ -1322,7 +1322,7 @@ function renderCriteriaTable(results,filter){
       <td style="width:40px"><div class="status-dot ${r.status}">${sym}</div></td>
       <td><div class="crit-id">${escHtml(r.id)}</div><div class="crit-name">${escHtml(crit.name)}</div><div class="crit-cat">${escHtml(crit.cat)}</div></td>
       <td style="color:var(--text2);font-size:12px">${verdict?escHtml(verdict.substring(0,120))+(verdict.length>120?'…':''):''}</td>
-      <td style="width:24px;padding-right:12px"><svg class="crit-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></td>
+      <td style="width:24px;padding-right:12px"><svg class="crit-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></td>
     </tr>`;
     const detailRow=`<tr class="crit-detail" id="${detailId}">
       <td colspan="4"><div class="crit-detail-inner">
