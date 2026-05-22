@@ -186,6 +186,7 @@ if ($action === 'url_data') {
         'kw_count'   => $kwCount,
         'keywords'   => $keywords,
         'no_data'    => ($visibility === null && empty($keywords)),
+        '_dbg_overview' => $raw['domain.overview'] ?? null,
     ]);
     exit;
 }
