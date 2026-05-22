@@ -1086,7 +1086,9 @@ async function startAnalysis(){
     sistrixData  = sistrixRes.status==='fulfilled'?sistrixRes.value:null;
 
     if(gscData?.keywords?.length)log(`GSC: ${gscData.keywords.length} Keywords geladen`,'ok');
-    else if(currentMode==='url')log('GSC: keine Daten (nicht konfiguriert oder keine Treffer für diese URL)');
+    else if(gscData?._empty)log('GSC: verbunden, aber keine Daten für diese URL (keine Impressionen in 90 Tagen?)');
+    else if(gscData?._error)log(`GSC: Fehler — ${gscData._error}`,'err');
+    else if(currentMode==='url')log('GSC: übersprungen (HTML-Modus oder keine Verbindung)');
     else log('GSC: übersprungen (HTML-Modus)');
     if(sistrixData?.success&&!sistrixData.no_data)log(`Sistrix: Sichtbarkeit ${sistrixData.visibility??'–'} · ${sistrixData.kw_count??'?'} Keywords (DE)`,'ok');
     else if(sistrixData?.success&&sistrixData.no_data)log('Sistrix: keine Daten für diese URL (in Sistrix nicht indexiert?)');
@@ -1167,7 +1169,13 @@ async function callApi(messages,systemPrompt,maxTokens=2000){
 
 // === DATEN-FETCH ===
 async function fetchGscData(url){
-  try{const res=await fetch('gsc.php?action=data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});const d=await res.json();return d.success?d:null;}catch(e){return null;}
+  try{
+    const res=await fetch('gsc.php?action=data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const d=await res.json();
+    if(d.success&&d.keywords?.length)return d;
+    if(d.success&&!d.keywords?.length)return{success:true,keywords:[],_empty:true};
+    return{success:false,_error:d.error||'Unbekannter Fehler'};
+  }catch(e){return{success:false,_error:e.message};}
 }
 async function fetchSistrixData(url){
   try{
