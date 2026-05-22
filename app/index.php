@@ -12,6 +12,7 @@ $csrfToken = $_SESSION['csrf_token'];
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('lat_theme');var p=window.matchMedia('(prefers-color-scheme:dark)').matches;if(t==='dark'||(t===null&&p))document.documentElement.setAttribute('data-theme','dark')})();</script>
 <style>
 @font-face{font-family:'Geist Mono';src:url('https://r2.vercel-storage.com/geist-mono/GeistMono-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 :root {
@@ -36,6 +37,20 @@ $csrfToken = $_SESSION['csrf_token'];
   --shadow:0 1px 4px rgba(15,23,42,.08),0 0 0 1px rgba(15,23,42,.04);
   --shadow-md:0 4px 12px rgba(15,23,42,.10),0 0 0 1px rgba(15,23,42,.04);
   --shadow-lg:0 8px 24px rgba(15,23,42,.12);
+}
+[data-theme="dark"]{
+  --bg:#0F172A; --bg2:#1E293B; --bg3:#162032; --bg4:#283348;
+  --border:#334155; --border2:#475569;
+  --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B;
+  --accent-bg:#1E1B4B; --accent-border:#3730A3;
+  --green-bg:#052E16; --green-border:#166534;
+  --amber-bg:#451A03; --amber-border:#92400E;
+  --red-bg:#450A0A; --red-border:#991B1B;
+  --blue-bg:#172554; --blue-border:#1D4ED8;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  --shadow:0 2px 6px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
+  --shadow-md:0 4px 14px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.7);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -83,8 +98,14 @@ button{font-family:inherit}
 }
 .sidebar-footer a{color:var(--text3);font-size:11px;transition:color .12s}
 .sidebar-footer a:hover{color:var(--red)}
-.main-content{margin-left:220px;flex:1;min-width:0;background:#fff}
-.workspace-header{height:64px;border-bottom:1px solid var(--border);background:#fff;display:flex;align-items:center;position:sticky;top:0;z-index:50}
+.theme-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 6px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;transition:color .12s,background .12s}
+.theme-btn:hover{color:var(--text2);background:var(--bg4)}
+.theme-btn .icon-sun{display:none}
+.theme-btn .icon-moon{display:block}
+[data-theme="dark"] .theme-btn .icon-sun{display:block}
+[data-theme="dark"] .theme-btn .icon-moon{display:none}
+.main-content{margin-left:220px;flex:1;min-width:0;background:var(--bg2)}
+.workspace-header{height:64px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;position:sticky;top:0;z-index:50}
 .workspace-header-inner{max-width:960px;margin:0 auto;padding:0 32px;display:flex;align-items:center;width:100%;gap:12px}
 .workspace-title{font-size:14px;font-weight:600;color:var(--text)}
 .workspace-divider{width:1px;height:16px;background:var(--border2);flex-shrink:0}
@@ -419,6 +440,12 @@ button{font-family:inherit}
   .score-hero-num{font-size:48px}
   .score-hero-actions{margin-left:0}
 }
+[data-theme="dark"] .url-input:focus,
+[data-theme="dark"] .html-textarea:focus,
+[data-theme="dark"] .ctx-input:focus,
+[data-theme="dark"] .settings-input:focus{background:var(--bg3)}
+[data-theme="dark"] .log-header{background:var(--bg2)}
+[data-theme="dark"] .log-header:hover{background:var(--bg3)}
 </style>
 </head>
 <body>
@@ -441,7 +468,13 @@ button{font-family:inherit}
   </nav>
   <div class="sidebar-footer">
     <span>LAT v2.0</span>
-    <a href="../login.php?logout=1">Abmelden</a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="theme-btn" id="btn-theme" onclick="toggleTheme()" title="Dark / Light Mode" aria-label="Theme wechseln">
+        <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a href="../login.php?logout=1">Abmelden</a>
+    </div>
   </div>
 </aside>
 <div class="main-content">
@@ -685,6 +718,21 @@ button{font-family:inherit}
         <div class="success-msg" id="msg-password">✓ Passwort geändert.</div>
         <div class="err-box" id="err-password" style="display:none;margin-top:10px;"></div>
       </form>
+    </div>
+    <div style="height:1px;background:var(--border);margin:24px 0"></div>
+    <div class="settings-section">
+      <div class="settings-section-title">Darstellung</div>
+      <div class="settings-section-desc">Helles oder dunkles Farbschema für das Interface wählen.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">Dark Mode</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:3px">Dunkles Farbschema für bessere Lesbarkeit bei wenig Licht.</div>
+        </div>
+        <label class="toggle-switch" title="Dark Mode ein-/ausschalten">
+          <input type="checkbox" id="setting-dark-mode" onchange="applyTheme(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
     <div style="height:1px;background:var(--border);margin:24px 0"></div>
     <div class="settings-section">
@@ -1601,6 +1649,16 @@ async function savePassword(e){
     else{msgEl.style.display='block';document.getElementById('s-pw').value='';document.getElementById('s-pw2').value='';setTimeout(()=>msgEl.style.display='none',3000)}
   }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
 }
+// === THEME ===
+function applyTheme(dark){
+  document.documentElement.setAttribute('data-theme',dark?'dark':'');
+  localStorage.setItem('lat_theme',dark?'dark':'light');
+  const cb=document.getElementById('setting-dark-mode');
+  if(cb)cb.checked=dark;
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.getAttribute('data-theme')!=='dark');
+}
 // === DEMO SETTING ===
 function loadDemoSetting(){
   const enabled=localStorage.getItem('lat_demo_btn')!=='false';
@@ -1613,6 +1671,8 @@ function saveDemoSetting(checked){
   document.getElementById('btn-demo').style.display=checked?'':'none';
 }
 loadDemoSetting();
+const _dmCb=document.getElementById('setting-dark-mode');
+if(_dmCb)_dmCb.checked=document.documentElement.getAttribute('data-theme')==='dark';
 </script>
 </body>
 </html>
