@@ -232,10 +232,11 @@ button{font-family:inherit}
   display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;
 }
 .progress-section{margin-bottom:20px}
-.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.progress-label{font-size:12px;font-weight:600;color:var(--text2)}
-.progress-pct{font-size:13px;font-weight:700;color:var(--accent);font-family:'Geist Mono','Courier New',monospace}
-.progress-bar-bg{height:6px;background:var(--bg4);border-radius:999px;overflow:hidden;margin-bottom:16px}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.progress-label{font-size:13px;font-weight:600;color:var(--text)}
+.progress-pct{font-size:26px;font-weight:700;color:var(--accent);font-family:'Geist Mono','Courier New',monospace;line-height:1}
+.progress-timer-stat{font-size:13px;color:var(--text3);font-family:'Geist Mono','Courier New',monospace}
+.progress-bar-bg{height:8px;background:var(--bg4);border-radius:999px;overflow:hidden;margin-bottom:6px}
 .progress-bar{
   height:100%;border-radius:999px;width:0%;
   background:linear-gradient(90deg,var(--accent),#818cf8);
@@ -252,7 +253,7 @@ button{font-family:inherit}
 .loader-dot:nth-child(2){animation-delay:.2s}
 .loader-dot:nth-child(3){animation-delay:.4s}
 @keyframes dotpulse{0%,80%,100%{opacity:.3;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
-.status-msg{font-size:12px;color:var(--text3);margin-bottom:10px}
+.status-msg{font-size:12px;color:var(--text3);margin-top:4px;margin-bottom:8px}
 .log-box{
   background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
   padding:12px 14px;font-family:'Geist Mono','Courier New',monospace;font-size:11px;color:var(--text3);
@@ -264,6 +265,17 @@ button{font-family:inherit}
 .settings-section{margin-bottom:32px}
 .settings-section-title{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
 .settings-section-desc{font-size:13px;color:var(--text3);margin-bottom:16px}
+/* API-Verbindungen */
+.api-test-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.api-test-row:last-child{border-bottom:none}
+.api-test-info{display:flex;align-items:center;gap:12px}
+.api-test-dot{width:9px;height:9px;border-radius:50%;background:var(--bg4);border:1.5px solid var(--border2);flex-shrink:0;transition:background .2s,border-color .2s}
+.api-test-dot.ok{background:var(--green);border-color:var(--green)}
+.api-test-dot.err{background:var(--red);border-color:var(--red)}
+.api-test-dot.testing{background:var(--amber);border-color:var(--amber)}
+.api-test-name{font-size:13px;font-weight:600;color:var(--text)}
+.api-test-msg{font-size:11px;color:var(--text3);margin-top:2px;font-family:'Geist Mono','Courier New',monospace}
+.btn-sm{padding:4px 12px!important;font-size:12px!important;height:28px!important;min-height:28px!important}
 .settings-field{margin-bottom:14px}
 .settings-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px}
 .settings-input{
@@ -543,19 +555,22 @@ button{font-family:inherit}
 
   <div id="progress-section" style="display:none">
     <div class="input-card">
+      <div class="progress-header">
+        <span class="progress-label" id="progress-label">Analyse startet…</span>
+        <span style="display:flex;align-items:center;gap:14px">
+          <span class="progress-timer-stat" id="progress-timer"></span>
+          <span class="progress-pct" id="progress-pct">0%</span>
+        </span>
+      </div>
       <div id="progress-bar-wrap"><div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div></div>
-      <div id="loader-wrap" style="margin-top:10px"><div class="loader-dots">
+      <div class="status-msg" id="status-msg"></div>
+      <div id="loader-wrap"><div class="loader-dots">
         <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
       </div></div>
-      <div class="status-msg" id="status-msg">Initialisierung…</div>
       <div class="log-wrap" id="log-wrap">
         <div class="log-header" onclick="toggleLog()">
-          <span class="progress-label" id="progress-label">Analyse-Log</span>
-          <span style="display:flex;align-items:center;gap:10px">
-            <span id="progress-timer" style="font-size:11px;color:var(--text3);font-family:'Geist Mono','Courier New',monospace"></span>
-            <span class="progress-pct" id="progress-pct">0%</span>
-            <svg class="log-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </span>
+          <span style="font-size:12px;font-weight:600;color:var(--text2)">Analyse-Log</span>
+          <svg class="log-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="log-box" id="log-box"></div>
       </div>
@@ -721,6 +736,34 @@ button{font-family:inherit}
         <div class="success-msg" id="msg-password">✓ Passwort geändert.</div>
         <div class="err-box" id="err-password" style="display:none;margin-top:10px;"></div>
       </form>
+    </div>
+    <div style="height:1px;background:var(--border);margin:24px 0"></div>
+    <div class="settings-section">
+      <div class="settings-section-title">API-Verbindungen</div>
+      <div class="settings-section-desc">Prüft ob alle konfigurierten APIs erreichbar und authentifiziert sind.</div>
+      <div>
+        <div class="api-test-row">
+          <div class="api-test-info"><span class="api-test-dot" id="dot-ai"></span><div><div class="api-test-name">KI-API (Anthropic / OpenAI)</div><div class="api-test-msg" id="testmsg-ai">—</div></div></div>
+          <button type="button" class="btn-secondary btn-sm" onclick="testApiConn('ai')">Testen</button>
+        </div>
+        <div class="api-test-row">
+          <div class="api-test-info"><span class="api-test-dot" id="dot-dataforseo"></span><div><div class="api-test-name">DataForSEO</div><div class="api-test-msg" id="testmsg-dataforseo">—</div></div></div>
+          <button type="button" class="btn-secondary btn-sm" onclick="testApiConn('dataforseo')">Testen</button>
+        </div>
+        <div class="api-test-row">
+          <div class="api-test-info"><span class="api-test-dot" id="dot-gsc"></span><div><div class="api-test-name">Google Search Console</div><div class="api-test-msg" id="testmsg-gsc">—</div></div></div>
+          <button type="button" class="btn-secondary btn-sm" onclick="testApiConn('gsc')">Testen</button>
+        </div>
+        <div class="api-test-row">
+          <div class="api-test-info"><span class="api-test-dot" id="dot-sistrix"></span><div><div class="api-test-name">Sistrix</div><div class="api-test-msg" id="testmsg-sistrix">—</div></div></div>
+          <button type="button" class="btn-secondary btn-sm" onclick="testApiConn('sistrix')">Testen</button>
+        </div>
+        <div class="api-test-row">
+          <div class="api-test-info"><span class="api-test-dot" id="dot-pagespeed"></span><div><div class="api-test-name">PageSpeed Insights</div><div class="api-test-msg" id="testmsg-pagespeed">—</div></div></div>
+          <button type="button" class="btn-secondary btn-sm" onclick="testApiConn('pagespeed')">Testen</button>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" style="margin-top:16px" onclick="testAllApis()">Alle gleichzeitig testen</button>
     </div>
     <div style="height:1px;background:var(--border);margin:24px 0"></div>
     <div class="settings-section">
@@ -1703,6 +1746,34 @@ async function savePassword(e){
     else{msgEl.style.display='block';document.getElementById('s-pw').value='';document.getElementById('s-pw2').value='';setTimeout(()=>msgEl.style.display='none',3000)}
   }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
 }
+// === API-VERBINDUNGSTESTS ===
+async function testApiConn(name){
+  const dot=document.getElementById('dot-'+name);
+  const msg=document.getElementById('testmsg-'+name);
+  if(!dot||!msg)return;
+  dot.className='api-test-dot testing';msg.textContent='Teste\u2026';
+  const urls={ai:'api.php?action=test',dataforseo:'dataforseo.php?action=test',gsc:'gsc.php?action=list',sistrix:'sistrix.php?action=test',pagespeed:'pagespeed.php?action=test'};
+  try{
+    const r=await fetch(urls[name]);
+    const d=await r.json();
+    let ok=false,detail='';
+    if(name==='gsc'){
+      ok=d.success&&d.domains?.length>0;
+      detail=ok?`${d.domains.length} Property konfiguriert`:(d.error||'Keine Properties konfiguriert');
+    }else{
+      ok=d.success===true;
+      if(ok){
+        if(name==='dataforseo'&&d.balance!=null)detail=`Guthaben: $${parseFloat(d.balance).toFixed(2)}`;
+        else if(name==='sistrix'&&d.remaining!=null)detail=`${d.remaining} Credits verbleibend`;
+        else if(name==='ai'&&d.model)detail=`Modell: ${d.model}`;
+        else detail='Verbunden';
+      }else{detail=d.error||d.message||'Unbekannter Fehler';}
+    }
+    dot.className='api-test-dot '+(ok?'ok':'err');
+    msg.textContent=(ok?'\u2713 ':'\u2717 ')+detail;
+  }catch(e){dot.className='api-test-dot err';msg.textContent='\u2717 Netzwerkfehler: '+e.message;}
+}
+function testAllApis(){['ai','dataforseo','gsc','sistrix','pagespeed'].forEach(n=>testApiConn(n));}
 // === THEME ===
 function applyTheme(dark){
   document.documentElement.setAttribute('data-theme',dark?'dark':'');

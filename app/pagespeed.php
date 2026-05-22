@@ -11,10 +11,25 @@ if (empty($_SESSION['logged_in'])) {
     echo json_encode(['error' => 'Nicht authentifiziert']);
     exit;
 }
+session_write_close();
 
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+
+require_once __DIR__ . '/config.php';
+
+// ── GET: Verbindungstest ──
+if (($_GET['action'] ?? '') === 'test') {
+    $key = CFG_PAGESPEED_KEY;
+    if (empty($key)) {
+        echo json_encode(['success' => false, 'error' => 'Kein API-Key konfiguriert (PAGESPEED_API_KEY)']);
+    } else {
+        echo json_encode(['success' => true]);
+    }
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method Not Allowed']);
