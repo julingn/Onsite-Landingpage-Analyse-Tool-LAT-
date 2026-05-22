@@ -170,12 +170,20 @@ if ($action === 'url_data') {
         }
     }
 
+    $noData = ($visibility === null && empty($keywords));
     echo json_encode([
         'success'    => true,
         'visibility' => $visibility,
         'kw_count'   => $kwCount,
         'keywords'   => $keywords,
-        'no_data'    => ($visibility === null && empty($keywords)),
+        'no_data'    => $noData,
+        // Temporäres Debug-Feld — nach Diagnose entfernen
+        '_debug'     => $noData ? [
+            'domain.overview_keys'      => array_keys($raw['domain.overview']['answer'][0] ?? []),
+            'domain.overview_raw'       => $raw['domain.overview']['answer'][0] ?? $raw['domain.overview'] ?? null,
+            'keyword.domain.seo_keys'   => array_keys($raw['keyword.domain.seo']['answer'][0] ?? []),
+            'keyword.domain.seo_raw'    => array_slice($raw['keyword.domain.seo']['answer'][0] ?? [], 0, 2),
+        ] : null,
     ]);
     exit;
 }
