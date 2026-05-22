@@ -13,7 +13,7 @@
 | **Branch** | `main` → auto-deploy Railway |
 | **Stack** | PHP 8.3 CLI Alpine, kein Framework |
 | **Kern** | `app/index.php` (~1750 Zeilen — PHP + HTML + CSS + JS) |
-| **Letzter Deploy** | `ff3b675` — Progressbar-Redesign + API-Verbindungstest in Einstellungen |
+| **Letzter Deploy** | `d1c20c0` — Sistrix API Parsing finalisiert |
 
 ---
 
@@ -139,7 +139,45 @@ renderResults() → rendert alle Panels
 - [x] Sistrix Integration — `e6890ff` → KEY `SISTRIX_API_KEY` in Railway setzen
 - [x] Session-Lock-Fix (`session_write_close`) in allen Proxys — `76f498d` / `9f0cbdf`
 - [x] Progressbar-Redesign (Zeit+% prominent) + API-Verbindungstest in Einstellungen — `ff3b675`
+- [x] Eingabebereich vollständig in Header integriert — `0d1b9bb`
+- [x] Sistrix API korrekt eingebunden (domain.visibilityindex + keyword.domain.seo) — `d1c20c0`
 - [ ] ...
+
+---
+
+## Header-Eingabebereich
+
+Der Eingabebereich ist vollständig im sticky `<header>` integriert (kein separater `input-hero`-Block mehr).
+
+**Struktur:**
+```
+[Header top row]  SQEG Analyzer | Google SQEG
+[workspace-header-form #header-form]
+  Zeile 1: URL-Input  +  [URL][HTML]-Switch
+  Zeile 2: ▾ Analyse verfeinern  (auf-/zuklappbar)
+           [Keyword] [Conversion-Ziel] [Zielgruppe]
+  Zeile 3: [▶ Analyse starten]  [Demo]
+```
+
+- `input-dimmed` wird auf `#header-form` angewendet (nicht mehr auf `#panel-sqeg > .input-card`)
+- Kein Scroll-Listener mehr (`condensed`-Logik entfernt)
+- Kein `input-hero`-Div mehr im DOM
+
+---
+
+## Sistrix API — Korrekte Endpunkte & JSON-Struktur
+
+| Endpunkt | Parameter | Response-Pfad |
+|---|---|---|
+| `domain.visibilityindex` | `domain=mvv.de&country=de` | `answer[0]['sichtbarkeitsindex'][0]['value']` |
+| `domain.kwcount.seo` | `domain=mvv.de&country=de` | `answer[0]['kwcount.seo'][0]['value']` |
+| `keyword.domain.seo` | `url=https://...&country=de&limit=20` | `answer[0]['result'][n]['kw'/'position'/'traffic']` |
+
+**Wichtig:**
+- `domain.overview` → **nicht verwenden** — liefert für URL-Level immer "no result"
+- Felder haben **kein `@`-Prefix** (JSON-Format, nicht XML)
+- Domain aus URL: `preg_replace('/^www\./i', '', parse_url($url)['host'])`
+- `keyword.domain.seo` wird mit der **vollen URL** aufgerufen, die anderen mit der **Domain**
 
 ---
 
