@@ -13,7 +13,7 @@
 | **Branch** | `main` → auto-deploy Railway |
 | **Stack** | PHP 8.3 CLI Alpine, kein Framework |
 | **Kern** | `app/index.php` (~1750 Zeilen — PHP + HTML + CSS + JS) |
-| **Letzter Deploy** | `e6890ff` — Sistrix Settings-UI entfernt |
+| **Letzter Deploy** | `ff3b675` — Progressbar-Redesign + API-Verbindungstest in Einstellungen |
 
 ---
 
@@ -95,8 +95,9 @@ renderResults() → rendert alle Panels
 1. Anthropic API-Key
 2. KI-Modell (Anthropic / OpenAI)
 3. Login-Passwort ändern
-4. Darstellung (Dark Mode)
-5. Entwickler-Optionen (Demo-Button)
+4. **API-Verbindungen** — Verbindungstest für alle 5 APIs (KI, DataForSEO, GSC, Sistrix, PageSpeed)
+5. Darstellung (Dark Mode)
+6. Entwickler-Optionen (Demo-Button)
 
 **→ Keine neuen Sections ohne explizite Anfrage hinzufügen.**
 
@@ -136,7 +137,45 @@ renderResults() → rendert alle Panels
 - [x] Input Hero (sticky, kondensiert) — `cb41b2b`
 - [x] PQ-Erweitert entfernt (Duplikat) — `b2414b3`
 - [x] Sistrix Integration — `e6890ff` → KEY `SISTRIX_API_KEY` in Railway setzen
+- [x] Session-Lock-Fix (`session_write_close`) in allen Proxys — `76f498d` / `9f0cbdf`
+- [x] Progressbar-Redesign (Zeit+% prominent) + API-Verbindungstest in Einstellungen — `ff3b675`
 - [ ] ...
+
+---
+
+## Progressbar-Design
+
+```html
+<!-- Struktur -->
+<div class="progress-header">
+  <span class="progress-label" id="progress-label">Analyse startet…</span>
+  <span style="display:flex;align-items:center;gap:14px">
+    <span class="progress-timer-stat" id="progress-timer"></span>  <!-- z.B. 12.3s -->
+    <span class="progress-pct" id="progress-pct">0%</span>       <!-- 26px, accent -->
+  </span>
+</div>
+<div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
+```
+
+- **Zeit + Prozent** stehen oben rechts, prominent, ÜBER der Bar
+- `.progress-pct`: `font-size:26px; font-weight:700; color:var(--accent); font-family:Geist Mono`
+- `.progress-bar-bg`: `height:8px` — dünn, dezent
+
+---
+
+## API-Verbindungstest
+
+Jeder Proxy hat einen `?action=test` GET-Handler (kein POST/CSRF):
+
+| Proxy | Test-Endpunkt | Was er prüft |
+|---|---|---|
+| `api.php` | `?action=test` | Mini-Call (3 Tokens) an Anthropic/OpenAI |
+| `dataforseo.php` | `?action=test` | `/v3/appendix/user_data` → Guthaben |
+| `gsc.php` | `?action=list` | Service-Account + Properties auflisten |
+| `sistrix.php` | `?action=test` | Credits-Endpoint |
+| `pagespeed.php` | `?action=test` | Prüft nur ob Key konfiguriert (kein echter Call — zu langsam) |
+
+JS-Funktionen: `testApiConn(name)` + `testAllApis()`
 
 ---
 
@@ -148,3 +187,4 @@ renderResults() → rendert alle Panels
 | Settings-UI für Datenquellen | **Nicht machen** — nur Railway ENV |
 | Hardcoded Farben | **Nicht machen** — immer `var(--)` |
 | PQ-Erweitert war Duplikat | Entfernt — war nur Re-Render von Cluster 5 |
+| **PHP Session + concurrent API calls** | `session_write_close()` SOFORT nach Auth-Check in JEDEM Proxy — sonst hält PHP die Session-Datei-Lock für die gesamte API-Call-Dauer → 401 für alle gleichzeitigen Batches |
