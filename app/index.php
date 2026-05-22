@@ -375,11 +375,14 @@ button{font-family:inherit}
 .skeleton-score{height:120px;margin-bottom:24px;border-radius:var(--radius-xl)}
 .skeleton-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
 .skeleton-stat{height:80px;border-radius:var(--radius-lg)}
+.skeleton-clusters{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.skeleton-cluster{height:136px;border-radius:var(--radius-lg)}
 @media(max-width:768px){
   .sidebar{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border)}
   .main-content{margin-left:0}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .skeleton-stats{grid-template-columns:repeat(2,1fr)}
+  .skeleton-clusters{grid-template-columns:repeat(2,1fr)}
   .cluster-overview{grid-template-columns:repeat(2,1fr)}
   .priority-matrix{grid-template-columns:1fr}
   .pq-cards{grid-template-columns:1fr}
@@ -490,6 +493,7 @@ button{font-family:inherit}
     <div id="skeleton-wrap" style="display:none">
       <div class="skeleton skeleton-score"></div>
       <div class="skeleton-stats"><div class="skeleton skeleton-stat"></div><div class="skeleton skeleton-stat"></div><div class="skeleton skeleton-stat"></div><div class="skeleton skeleton-stat"></div></div>
+      <div class="skeleton-clusters"><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div><div class="skeleton skeleton-cluster"></div></div>
     </div>
   </div>
 
@@ -1261,7 +1265,11 @@ function renderClusterOverview(){
       </div>
       <div class="cluster-card-info">
         <div class="cluster-card-name">${escHtml(cl.name)}</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:5px"><span style="color:var(--green)">${g}✓</span> <span style="color:var(--amber)">${a}◑</span> <span style="color:var(--red)">${rd}✗</span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:12px">
+          <span style="color:var(--green)">${g} ✓ Bestanden</span>
+          <span style="color:var(--amber)">${a} ◑ Verbesserbar</span>
+          <span style="color:var(--red)">${rd} ✗ Fehlerhaft</span>
+        </div>
       </div>
     </div>`;
   }).join('');
