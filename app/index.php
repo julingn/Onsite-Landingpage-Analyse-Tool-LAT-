@@ -724,26 +724,6 @@ button{font-family:inherit}
     </div>
     <div style="height:1px;background:var(--border);margin:24px 0"></div>
     <div class="settings-section">
-      <div class="settings-section-title">Sistrix</div>
-      <div class="settings-section-desc">API-Key für URL-spezifische Sichtbarkeitsdaten (Deutschland). Erhältlich unter app.sistrix.com/api.</div>
-      <form id="form-sistrix" onsubmit="saveSistrix(event)">
-        <div class="settings-field">
-          <label class="settings-label" for="s-sistrix">API-Key</label>
-          <div class="settings-input-wrap">
-            <input type="password" id="s-sistrix" class="settings-input" placeholder="Sistrix API-Key" autocomplete="off">
-            <button type="button" class="settings-toggle-btn" onclick="toggleSettingsPw('s-sistrix',this)">Anzeigen</button>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button type="submit" class="btn-save">Speichern</button>
-          <button type="button" class="btn-secondary" onclick="testSistrix()">Verbindung testen</button>
-        </div>
-        <div class="success-msg" id="msg-sistrix">✓ API-Key gespeichert.</div>
-        <div class="err-box" id="err-sistrix" style="display:none;margin-top:10px;"></div>
-      </form>
-    </div>
-    <div style="height:1px;background:var(--border);margin:24px 0"></div>
-    <div class="settings-section">
       <div class="settings-section-title">Darstellung</div>
       <div class="settings-section-desc">Helles oder dunkles Farbschema für das Interface wählen.</div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px">
@@ -1703,33 +1683,6 @@ async function savePassword(e){
     if(d.error){errEl.textContent=d.error;errEl.style.display='flex'}
     else{msgEl.style.display='block';document.getElementById('s-pw').value='';document.getElementById('s-pw2').value='';setTimeout(()=>msgEl.style.display='none',3000)}
   }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
-}
-async function saveSistrix(e){
-  e.preventDefault();
-  const key=document.getElementById('s-sistrix').value.trim();
-  const errEl=document.getElementById('err-sistrix'),msgEl=document.getElementById('msg-sistrix');
-  errEl.style.display='none';msgEl.style.display='none';
-  if(!key){errEl.textContent='Bitte einen API-Key eingeben.';errEl.style.display='flex';return}
-  const fd=new FormData();fd.append('action','save_sistrix');fd.append('sistrix_api_key',key);fd.append('csrf_token',CSRF_TOKEN);
-  try{
-    const r=await fetch('settings_save.php',{method:'POST',body:fd});
-    const d=await r.json();
-    if(d.error){errEl.textContent=d.error;errEl.style.display='flex'}
-    else{msgEl.style.display='block';document.getElementById('s-sistrix').value='';setTimeout(()=>msgEl.style.display='none',3000)}
-  }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
-}
-async function testSistrix(){
-  const errEl=document.getElementById('err-sistrix'),msgEl=document.getElementById('msg-sistrix');
-  errEl.style.display='none';msgEl.style.display='none';
-  try{
-    const r=await fetch('sistrix.php?action=test');
-    const d=await r.json();
-    if(d.success){
-      const info=d.remaining!=null?` (${d.remaining} Credits verbleibend)`:'';
-      msgEl.textContent=`✓ Verbindung erfolgreich${info}.`;msgEl.style.display='block';
-      setTimeout(()=>msgEl.style.display='none',5000);
-    }else{errEl.textContent=d.error||'Verbindung fehlgeschlagen.';errEl.style.display='flex'}
-  }catch(err){errEl.textContent='Netzwerkfehler: '+err.message;errEl.style.display='flex'}
 }
 // === THEME ===
 function applyTheme(dark){
