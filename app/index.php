@@ -296,17 +296,18 @@ button{font-family:inherit}
 .stat-box.blue .stat-num{color:var(--blue)}
 .stat-lbl{font-size:11px;font-weight:500;color:var(--text3)}
 /* === CLUSTER OVERVIEW === */
-.cluster-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.cluster-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
 .cluster-card{
-  display:flex;align-items:center;gap:16px;
+  display:flex;align-items:center;gap:16px;min-width:0;
   background:var(--bg2);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:20px 22px;
   box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s;
 }
 .cluster-card:hover{box-shadow:var(--shadow);border-color:var(--border2)}
 .cluster-card-donut{flex-shrink:0}
-.cluster-card-info{min-width:0}
-.cluster-card-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.35}{display:flex;align-items:center;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
+.cluster-card-info{min-width:0;overflow:hidden}
+.cluster-card-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.35}
+.sqeg-scale{display:flex;align-items:center;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
 .sqeg-level{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);cursor:default;border-right:1px solid var(--border);transition:background .2s,color .2s}
 .sqeg-level:last-child{border-right:none}
 .sqeg-level.active{background:var(--accent);color:#fff}
