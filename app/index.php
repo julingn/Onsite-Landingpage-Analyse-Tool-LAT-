@@ -124,10 +124,10 @@ button{font-family:inherit}
 .toggle-switch input:checked+.toggle-slider:before{transform:translateX(16px)}
 /* Log Collapse */
 .log-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:8px}
-.log-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;cursor:pointer;background:var(--bg3);user-select:none;transition:background .1s}
-.log-header:hover{background:var(--bg4)}
-.log-header .log-chevron{transition:transform .2s;color:var(--text3);flex-shrink:0}
-.log-wrap.collapsed .log-header .log-chevron{transform:rotate(-90deg)}
+.log-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;cursor:pointer;background:var(--bg2);user-select:none;transition:background .1s}
+.log-header:hover{background:var(--bg3)}
+.log-header .log-chevron{transition:transform .2s;color:var(--text3);flex-shrink:0;transform:rotate(180deg)}
+.log-wrap.collapsed .log-header .log-chevron{transform:rotate(0deg)}
 .log-wrap.collapsed .log-box{display:none}
 .log-wrap .log-box{border:none;border-top:1px solid var(--border);border-radius:0;margin-top:0}
 .html-textarea{
@@ -206,7 +206,7 @@ button{font-family:inherit}
 @keyframes dotpulse{0%,80%,100%{opacity:.3;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
 .status-msg{font-size:12px;color:var(--text3);margin-bottom:10px}
 .log-box{
-  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
   padding:12px 14px;font-family:'Geist Mono','Courier New',monospace;font-size:11px;color:var(--text3);
   height:200px;overflow-y:auto;line-height:1.7;
 }
@@ -859,9 +859,6 @@ async function startDemo(){
   currentUrl='https://www.beispiel-energie.de/strom/tarife';
   ymylResult='none';
 
-  const ud=document.getElementById('url-display');
-  ud.textContent=currentUrl;ud.style.display='block';
-
   setProgress(2,'Demo-Daten laden…','Simulierte Analyse…');
   log('⚡ Demo-Modus — keine echten API-Aufrufe');
   await sleep(350);
@@ -935,8 +932,6 @@ async function startAnalysis(){
   try{
     if(currentMode==='url'){
       currentUrl=urlVal;
-      const ud=document.getElementById('url-display');
-      ud.textContent=currentUrl;ud.style.display='block';
       log('Rufe URL ab: '+currentUrl);
       setProgress(2,'HTML abrufen…','Seite wird geladen…');
       const res=await fetch('fetch.php?url='+encodeURIComponent(currentUrl));
