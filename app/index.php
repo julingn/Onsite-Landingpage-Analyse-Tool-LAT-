@@ -351,8 +351,8 @@ button{font-family:inherit}
 .pq-card-body{font-size:12px;color:var(--text2);line-height:1.6}
 .export-bar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
 /* === SKELETON SCREENS === */
-.skeleton{border-radius:var(--radius);background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:skel-wave 1.4s ease-in-out infinite}
-@keyframes skel-wave{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton{border-radius:var(--radius);background:var(--bg4);animation:skel-pulse 3s ease-in-out infinite}
+@keyframes skel-pulse{0%,100%{opacity:.45}50%{opacity:.8}}
 .skeleton-score{height:120px;margin-bottom:24px;border-radius:var(--radius-xl)}
 .skeleton-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
 .skeleton-stat{height:80px;border-radius:var(--radius-lg)}
@@ -460,7 +460,7 @@ button{font-family:inherit}
       <div class="log-box" id="log-box"></div>
     </div>
     <!-- Skeleton während Analyse -->
-    <div id="skeleton-wrap">
+    <div id="skeleton-wrap" style="display:none">
       <div class="skeleton skeleton-score"></div>
       <div class="skeleton-stats"><div class="skeleton skeleton-stat"></div><div class="skeleton skeleton-stat"></div><div class="skeleton skeleton-stat"></div><div class="skeleton skeleton-stat"></div></div>
     </div>
@@ -530,7 +530,7 @@ button{font-family:inherit}
       <button class="filter-btn" data-filter="pq" onclick="setFilter('pq',this)">☐ PQ-Erweitert</button>
     </div>
     <table class="criteria-table" id="criteria-table">
-      <thead><tr><th style="width:44px">Status</th><th>Kriterium</th><th>Befund &amp; Bewertung</th></tr></thead>
+      <thead><tr><th style="width:44px">Status</th><th>Kriterium</th><th>Befund &amp; Bewertung</th><th style="width:28px"></th></tr></thead>
       <tbody id="criteria-tbody"></tbody>
     </table>
     <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">PQ-Erweitert (e1–e7)</span><div class="section-divider-line"></div></div>
@@ -572,7 +572,7 @@ button{font-family:inherit}
       <form id="form-model" onsubmit="saveModel(event)">
         <div class="settings-field">
           <label class="settings-label" for="s-model">Modell</label>
-          <select id="s-model" class="settings-input" style="font-family:'DM Sans',sans-serif;cursor:pointer">
+          <select id="s-model" class="settings-input" style="font-family:'Inter',sans-serif;cursor:pointer">
             <option value="claude-sonnet-4-5">claude-sonnet-4-5 (Standard)</option>
             <option value="claude-opus-4-5">claude-opus-4-5 (leistungsstärker)</option>
             <option value="claude-haiku-4-5">claude-haiku-4-5 (schneller / günstiger)</option>
@@ -741,10 +741,7 @@ function formatTime(s){const m=Math.floor(s/60),sec=Math.round(s%60);return`${m}
 function updateTimer(){
   const el=document.getElementById('progress-timer');
   if(!el)return;
-  const elapsed=(Date.now()-analysisStartTime)/1000;
-  let txt=formatTime(elapsed);
-  if(lastPct>5&&lastPct<100){const eta=elapsed*(100-lastPct)/lastPct;txt+=` · ~${formatTime(eta)} übrig`;}
-  el.textContent=txt;
+  el.textContent=formatTime((Date.now()-analysisStartTime)/1000);
 }
 
 // === START ANALYSIS ===
@@ -779,7 +776,7 @@ async function startAnalysis(){
       const ud=document.getElementById('url-display');
       ud.textContent=currentUrl;ud.style.display='block';
       log('Rufe URL ab: '+currentUrl);
-      setProgress(3,'HTML abrufen…','Seite wird geladen…');
+      setProgress(2,'HTML abrufen…','Seite wird geladen…');
       const res=await fetch('fetch.php?url='+encodeURIComponent(currentUrl));
       if(!res.ok)throw new Error('fetch.php HTTP '+res.status);
       const data=await res.json();
@@ -791,7 +788,7 @@ async function startAnalysis(){
       currentHtml=htmlVal;
       log('HTML manuell eingefügt ('+( currentHtml.length/1024).toFixed(1)+' KB)','ok');
     }
-    setProgress(8);
+    setProgress(5);
     const pageText=extractPageText(currentHtml);
     const wordCount=pageText.split(/\s+/).filter(Boolean).length;
     log(`Seitentext extrahiert: ${(pageText.length/1024).toFixed(0)} KB · ~${wordCount.toLocaleString('de-DE')} Wörter (von ${(currentHtml.length/1024).toFixed(0)} KB HTML)`,'ok');
@@ -800,7 +797,7 @@ async function startAnalysis(){
     const effectiveKeyword=keyword||'';
 
     // Externe Daten parallel abrufen (Fehler blockieren nicht)
-    setProgress(8,'Daten abrufen…','GSC · SERP · Backlinks · PageSpeed…');
+    setProgress(5,'Daten abrufen…','GSC · SERP · Backlinks · PageSpeed…');
     const [gscRes,serpRes,blRes,psiRes]=await Promise.allSettled([
       currentMode==='url'&&currentUrl?fetchGscData(currentUrl):Promise.resolve(null),
       effectiveKeyword?fetchSerpData(effectiveKeyword):Promise.resolve(null),
@@ -820,7 +817,7 @@ async function startAnalysis(){
     else log('Backlinks: keine Daten');
     if(psiData?.success)log(`PageSpeed: Score ${psiData.perf_score}/100 (Mobile)`,'ok');
     else if(currentMode==='url')log('PageSpeed: keine Daten');
-    setProgress(14);
+    setProgress(10);
 
     // Kontext-Blöcke bauen
     const ctx={
@@ -832,10 +829,10 @@ async function startAnalysis(){
     };
 
     log('Klassifiziere YMYL…');
-    setProgress(15,'YMYL klassifizieren…','YMYL-Analyse…');
+    setProgress(11,'YMYL klassifizieren…','YMYL-Analyse…');
     ymylResult=await classifyYmyl(htmlSnippet,currentUrl);
     log('YMYL: '+ymylResult,'ok');
-    setProgress(18);
+    setProgress(13);
 
     log('Starte 21 SQEG-Mini-Calls (42 Kriterien) in Batches…');
     setProgress(18,'SQEG-Kriterien analysieren…','KI-Anfragen…');
@@ -850,10 +847,10 @@ async function startAnalysis(){
         if(r.status==='fulfilled'){analysisResults.push(...r.value);log(`✓ ${names}`,'ok')}
         else{log(`✗ ${names}: `+r.reason,'err')}
         callsDone++;
-        setProgress(18+(callsDone/21)*52);
+        setProgress(13+(callsDone/21)*77);
       });
     }
-    setProgress(92,'Ergebnisse rendern…','Fast fertig…');
+    setProgress(92,'Ergebnisse rendern…','Fast fertig…'); // 90→92 via last batch
     renderResults(keyword);
     setProgress(100,'Fertig!','Analyse abgeschlossen.');
     setTimeout(()=>{
@@ -871,6 +868,7 @@ async function startAnalysis(){
     },600);
   }catch(err){
     if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+    document.getElementById('skeleton-wrap').style.display='none';
     log('Kritischer Fehler: '+err.message,'err');
     setProgress(0,'Fehler',err.message);
   }
