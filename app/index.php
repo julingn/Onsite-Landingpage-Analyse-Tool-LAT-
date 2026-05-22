@@ -1086,9 +1086,13 @@ async function startAnalysis(){
     sistrixData  = sistrixRes.status==='fulfilled'?sistrixRes.value:null;
 
     if(gscData?.keywords?.length)log(`GSC: ${gscData.keywords.length} Keywords geladen`,'ok');
-    else log('GSC: keine Daten (nicht konfiguriert oder keine Treffer)');
-    if(sistrixData?.success)log(`Sistrix: Sichtbarkeit ${sistrixData.visibility??'–'} · ${sistrixData.kw_count??'?'} Keywords (DE)`,'ok');
-    else if(currentMode==='url')log('Sistrix: keine Daten (nicht konfiguriert oder keine Treffer)');
+    else if(currentMode==='url')log('GSC: keine Daten (nicht konfiguriert oder keine Treffer für diese URL)');
+    else log('GSC: übersprungen (HTML-Modus)');
+    if(sistrixData?.success&&!sistrixData.no_data)log(`Sistrix: Sichtbarkeit ${sistrixData.visibility??'–'} · ${sistrixData.kw_count??'?'} Keywords (DE)`,'ok');
+    else if(sistrixData?.success&&sistrixData.no_data)log('Sistrix: keine Daten für diese URL (in Sistrix nicht indexiert?)');
+    else if(sistrixData?.error)log(`Sistrix: ${sistrixData.error}`,'err');
+    else if(currentMode==='url')log('Sistrix: keine Daten (API-Key nicht konfiguriert oder Fehler)');
+    else log('Sistrix: übersprungen (HTML-Modus)');
     if(serpData?.tasks?.[0]?.result?.[0]?.items)log(`SERP: Top-10 für "${effectiveKeyword}" geladen`,'ok');
     else if(effectiveKeyword)log(`SERP: keine Daten für "${effectiveKeyword}"`);
     if(backlinkData?.tasks?.[0]?.result?.[0])log('Backlinks: Profil geladen','ok');
