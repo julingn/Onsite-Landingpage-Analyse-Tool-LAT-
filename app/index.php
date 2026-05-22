@@ -296,18 +296,17 @@ button{font-family:inherit}
 .stat-box.blue .stat-num{color:var(--blue)}
 .stat-lbl{font-size:11px;font-weight:500;color:var(--text3)}
 /* === CLUSTER OVERVIEW === */
-.cluster-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.cluster-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
 .cluster-card{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:16px;
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:12px 14px;
+  border-radius:var(--radius-lg);padding:20px 22px;
   box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s;
 }
 .cluster-card:hover{box-shadow:var(--shadow);border-color:var(--border2)}
 .cluster-card-donut{flex-shrink:0}
 .cluster-card-info{min-width:0}
-.cluster-card-num{font-size:10px;font-weight:600;color:var(--text3);font-family:'Geist Mono','Courier New',monospace;margin-bottom:2px}
-.cluster-card-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.35}{display:flex;align-items:center;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
+.cluster-card-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.35}{display:flex;align-items:center;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
 .sqeg-level{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);cursor:default;border-right:1px solid var(--border);transition:background .2s,color .2s}
 .sqeg-level:last-child{border-right:none}
 .sqeg-level.active{background:var(--accent);color:#fff}
@@ -1238,7 +1237,7 @@ function renderClusterOverview(){
     {num:'7',name:'Werbung & SC'},
     {num:'8',name:'Needs Met'},
   ];
-  const R=18,SW=5,CX=24,CY=24;
+  const R=36,SW=10,CX=48,CY=48;
   const circ=2*Math.PI*R;
   el.innerHTML=clusters.map(cl=>{
     const res=analysisResults.filter(r=>r.id.startsWith(cl.num+'.'));
@@ -1254,16 +1253,15 @@ function renderClusterOverview(){
     const rd=res.filter(r=>r.status==='red').length;
     return`<div class="cluster-card">
       <div class="cluster-card-donut">
-        <svg width="48" height="48" viewBox="0 0 48 48">
+        <svg width="96" height="96" viewBox="0 0 96 96">
           <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--bg4)" stroke-width="${SW}"/>
           <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-dasharray="${dash} ${circ.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${CX} ${CY})"/>
-          <text x="${CX}" y="${CY}" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="${color}" font-family="Inter,sans-serif">${score}%</text>
+          <text x="${CX}" y="${CY}" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="700" fill="${color}" font-family="Inter,sans-serif">${score}%</text>
         </svg>
       </div>
       <div class="cluster-card-info">
-        <div class="cluster-card-num">${cl.num}</div>
         <div class="cluster-card-name">${escHtml(cl.name)}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:3px"><span style="color:var(--green)">${g}✓</span> <span style="color:var(--amber)">${a}◑</span> <span style="color:var(--red)">${rd}✗</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:5px"><span style="color:var(--green)">${g}✓</span> <span style="color:var(--amber)">${a}◑</span> <span style="color:var(--red)">${rd}✗</span></div>
       </div>
     </div>`;
   }).join('');
