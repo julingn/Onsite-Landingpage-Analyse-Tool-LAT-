@@ -94,7 +94,7 @@ button{font-family:inherit}
 .input-row{display:flex;gap:10px;align-items:center;margin:0 0 4px}
 .url-input{
   flex:1;height:42px;padding:0 14px;border:1px solid var(--border2);border-radius:var(--radius);
-  background:var(--bg3);font-family:'Geist Mono','Courier New',monospace;font-size:13px;
+  background:var(--bg);font-family:'Geist Mono','Courier New',monospace;font-size:13px;
   color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s,background .15s;min-width:0;
 }
 .url-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-border);background:#fff}
@@ -142,7 +142,7 @@ button{font-family:inherit}
 }
 .context-toggle:hover{color:var(--accent)}
 .context-fields{display:none;gap:12px;margin-top:12px}
-.context-fields.visible{display:flex;flex-wrap:wrap}
+.context-fields.visible{display:flex;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:14px;margin-top:4px}
 .ctx-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}
 .ctx-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
 .ctx-input{
@@ -156,6 +156,7 @@ button{font-family:inherit}
   border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;
   box-shadow:var(--shadow-sm);
 }
+.input-card.input-dimmed{opacity:.4;pointer-events:none;transition:opacity .3s}
 .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .card-icon{
   width:38px;height:38px;background:var(--accent-bg);border:1px solid var(--accent-border);
@@ -163,7 +164,7 @@ button{font-family:inherit}
 }
 .card-icon svg{color:var(--accent)}
 .card-title{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
-.card-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:'Geist Mono','Courier New',monospace}
+.card-sub{font-size:11px;color:var(--text3);margin-top:2px}
 .card-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
 .url-display{
   font-family:'Geist Mono','Courier New',monospace;font-size:12px;color:var(--accent);
@@ -450,6 +451,10 @@ button{font-family:inherit}
         <div class="card-sub">Google Search Quality Evaluator Guidelines · Nov 2025</div>
       </div>
       <div class="card-actions">
+        <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Vorschau mit Beispieldaten">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+          Demo
+        </button>
         <div class="mode-toggle">
           <button class="mode-btn active" id="mode-url" onclick="setMode('url')">URL</button>
           <button class="mode-btn" id="mode-html" onclick="setMode('html')">HTML</button>
@@ -457,11 +462,7 @@ button{font-family:inherit}
       </div>
     </div>
     <div class="input-row">
-      <input type="text" id="url-input" class="url-input" placeholder="https://www.beispiel.de/seite" autocomplete="off" spellcheck="false">
-      <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Demo-Analyse ohne echte API-Aufrufe starten">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
-        Demo
-      </button>
+      <input type="text" id="url-input" class="url-input" placeholder="URL der Landingpage eingeben" autocomplete="off" spellcheck="false">
       <button class="btn-start" id="btn-start" onclick="startAnalysis()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Analyse starten
@@ -473,11 +474,11 @@ button{font-family:inherit}
     <div id="url-display" class="url-display"></div>
     <button class="context-toggle" onclick="toggleContext()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      Optionale Kontext-Felder (Keyword, Ziel, Zielgruppe)
+      Analyse verfeinern
     </button>
     <div class="context-fields" id="context-fields">
       <div class="ctx-field">
-        <span class="ctx-label">Keyword / Suchanfrage</span>
+        <span class="ctx-label">Ziel-Keyword</span>
         <input type="text" id="ctx-keyword" class="ctx-input" placeholder="z.B. beste Zahnversicherung">
       </div>
       <div class="ctx-field">
@@ -880,6 +881,7 @@ async function startDemo(){
   document.getElementById('exec-summary-content').style.display='none';
   document.getElementById('exec-summary-loading').style.display='flex';
   document.getElementById('btn-demo').disabled=true;
+  document.querySelector('#panel-sqeg > .input-card').classList.add('input-dimmed');
   document.getElementById('progress-section').style.display='block';
   document.getElementById('progress-bar-wrap').style.display='block';
   document.getElementById('loader-wrap').style.display='block';
@@ -956,6 +958,7 @@ async function startAnalysis(){
   document.getElementById('exec-summary-loading').style.display='flex';
   document.getElementById('btn-start').disabled=true;
   document.getElementById('btn-demo').disabled=true;
+  document.querySelector('#panel-sqeg > .input-card').classList.add('input-dimmed');
   document.getElementById('progress-section').style.display='block';
   document.getElementById('progress-bar-wrap').style.display='block';
   document.getElementById('loader-wrap').style.display='block';
@@ -1338,6 +1341,7 @@ Global-Regeln:
 }
 
 function renderResults(keyword){
+  document.querySelector('#panel-sqeg > .input-card').classList.remove('input-dimmed');
   const score=calcScore();
   const hasLowestSignal=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
   const level=hasLowestSignal?'Lowest':scoreToLevel(score);
