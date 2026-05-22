@@ -112,6 +112,9 @@ button{font-family:inherit}
 .btn-start:active{transform:translateY(0);box-shadow:var(--shadow-sm)}
 .btn-start:focus-visible{outline:3px solid var(--accent-border);outline-offset:2px}
 .btn-start:disabled{background:var(--bg4);color:var(--text3);box-shadow:none;transform:none;cursor:not-allowed}
+.btn-demo{height:42px;padding:0 14px;border:1px dashed var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:background .1s,border-color .1s;flex-shrink:0}
+.btn-demo:hover{background:var(--bg4);border-color:var(--text3);color:var(--text)}
+.btn-demo:disabled{opacity:.4;cursor:not-allowed}
 /* Log Collapse */
 .log-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:8px}
 .log-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;cursor:pointer;background:var(--bg3);user-select:none;transition:background .1s}
@@ -425,6 +428,10 @@ button{font-family:inherit}
     </div>
     <div class="input-row">
       <input type="text" id="url-input" class="url-input" placeholder="https://www.beispiel.de/seite" autocomplete="off" spellcheck="false">
+      <button class="btn-demo" id="btn-demo" onclick="startDemo()" title="Demo-Analyse ohne echte API-Aufrufe starten">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Demo
+      </button>
       <button class="btn-start" id="btn-start" onclick="startAnalysis()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Analyse starten
@@ -761,6 +768,120 @@ function updateTimer(){
   el.textContent=formatTime((Date.now()-analysisStartTime)/1000);
 }
 
+// === DEMO MODE ===
+const DEMO_RESULTS=[
+  {id:'1.1',status:'green', finding:'Beleg: Seitenüberschrift „Strom Tarife Vergleich" eindeutig. | Regel: Seitenzweck muss für Nutzer sofort erkennbar sein. | Bewertung: Zweck klar kommuniziert.',improvement:''},
+  {id:'1.2',status:'green', finding:'Beleg: Preisvergleichsseite mit CTA „Jetzt wechseln". | Regel: Seitentyp klar klassifizierbar. | Bewertung: Transaktionale Seite korrekt eingeordnet.',improvement:''},
+  {id:'1.3',status:'green', finding:'Beleg: Energievergleich ohne Gesundheits-/Finanzberatung. | Regel: YMYL-Einordnung nach Risikolevel. | Bewertung: Kein erhöhter YMYL-Status.',improvement:''},
+  {id:'1.4',status:'amber', finding:'Beleg: Sidebar-Werbung grenzt nahtlos an Hauptinhalt. | Regel: MC, SC und Werbung müssen klar getrennt sein. | Bewertung: Abgrenzung verbesserungswürdig.',improvement:'Klare visuelle Trennlinie zwischen Vergleichstabelle und Sidebar-Widgets einziehen.'},
+  {id:'2.1',status:'red',   finding:'Beleg: Generische Beschreibungen ohne persönliche Einblicke oder Testberichte. | Regel: Menschlicher Aufwand (originäre Leistung) muss erkennbar sein. | Bewertung: Kein nachweisbarer Mehraufwand.',improvement:'Ergänze redaktionelle Kommentare, Testberichte oder persönliche Erfahrungen mit Tarifen.'},
+  {id:'2.2',status:'red',   finding:'Beleg: Texte ähneln generischen Tarifvergleichs-Templates ohne erkennbare Eigenleistung. | Regel: Originalität erfordert einzigartigen Mehrwert. | Bewertung: Keine Originalität feststellbar.',improvement:'Füge exklusive Daten, eigene Berechnungen oder redaktionelle Einschätzungen hinzu.'},
+  {id:'2.3',status:'amber', finding:'Beleg: Rechtschreibfehler auf 3 Unterseiten, Tabelle unvollständig. | Regel: Handwerkliche Qualität erfordert fehlerfreie Darstellung. | Bewertung: Einige Mängel festgestellt.',improvement:'Korrekturlesen und Tabellenvollständigkeit sicherstellen.'},
+  {id:'2.4',status:'red',   finding:'Beleg: Tarif „Öko-Plus" zeigt falschen Grundpreis (Stand 01/2024, inzwischen erhöht). | Regel: Faktische Korrektheit besonders bei Preisangaben kritisch. | Bewertung: Veraltete Preisdaten gefunden.',improvement:'Automatische Preisaktualisierung implementieren oder manuelle Prüfung wöchentlich durchführen.'},
+  {id:'2.5',status:'amber', finding:'Beleg: Themen Netzentgelte und Preisgarantien fehlen. | Regel: Vollständigkeit erfordert alle entscheidungsrelevanten Aspekte. | Bewertung: Wichtige Themenaspekte fehlen.',improvement:'Ergänze Abschnitte zu Netzentgelten, Preisgarantieoptionen und Anbieterbewertungen.'},
+  {id:'2.6',status:'amber', finding:'Beleg: Einleitungsabsatz wiederholt Tarifnamen ohne Mehrwert. | Regel: Kein Füllmaterial oder unnötige Wiederholungen. | Bewertung: Leichtes Filler-Content-Problem.',improvement:'Kürze Einleitungen und ersetze Wiederholungen durch konkrete Nutzwert-Aussagen.'},
+  {id:'2.7',status:'red',   finding:'Beleg: Produktbeschreibungen folgen einheitlichem Template-Muster, keine stilistischen Variationen. | Regel: KI/Massen-Content darf keinen Spam-Eindruck erzeugen. | Bewertung: Template-Content-Verdacht.',improvement:'Überarbeite Produktbeschreibungen mit individuellen redaktionellen Texten pro Tarif.'},
+  {id:'2.8',status:'red',   finding:'Beleg: Seite zeigt „Zuletzt aktualisiert: März 2023". | Regel: Aktualität ist besonders bei Tarifdaten entscheidend. | Bewertung: Erheblich veralteter Inhalt.',improvement:'Regelmäßige Aktualisierungszyklen einrichten, Datum prominent anzeigen.'},
+  {id:'3.1',status:'amber', finding:'Beleg: Keine Testberichte oder Erfahrungsberichte von Redakteuren. | Regel: Experience erfordert nachweisbare eigene Erfahrungen mit dem Thema. | Bewertung: Erfahrungsnachweis fehlt.',improvement:'Ergänze Redakteurs-Profile mit Energiemarkt-Erfahrung und persönlichen Einschätzungen.'},
+  {id:'3.2',status:'red',   finding:'Beleg: Keine fachlichen Referenzen, keine Quellenangaben zu Tarifdaten. | Regel: Expertise erfordert erkennbare Fachkenntnisse. | Bewertung: Fachkompetenz nicht nachgewiesen.',improvement:'Ergänze Expertenbios, Quellenangaben zu Bundesnetzagentur-Daten und Branchenreferenzen.'},
+  {id:'3.3',status:'amber', finding:'Beleg: Domain existiert seit 2019, keine Branchenawards oder Mediennennung. | Regel: Autorität erfordert externe Anerkennung oder Bekanntheit. | Bewertung: Begrenzte Autorität.',improvement:'Baue externe Verlinkungen und Medienerwähnungen auf, erscheine auf Vergleichsportalen.'},
+  {id:'3.4',status:'green', finding:'Beleg: SSL-Zertifikat, DSGVO-konformes Cookie-Banner, keine Schadsoftware-Anzeichen. | Regel: Trust als wichtigster E-E-A-T-Faktor. | Bewertung: Grundvertrauen gegeben.',improvement:''},
+  {id:'3.5',status:'red',   finding:'Beleg: Transaktionsseite für Energie ohne erkennbare Redaktionskompetenz — bei Kauf-Entscheidungen gilt E-E-A-T-Pflicht. | Regel: Erhöhtes E-E-A-T-Anforderungsprofil für transaktionale Seiten. | Bewertung: YMYL-Anforderungen nicht erfüllt.',improvement:'Transparentes Impressum mit Redaktionsleitung, Fachbeirat oder Partnerschaft mit Verbraucherorganisation aufbauen.'},
+  {id:'4.1',status:'amber', finding:'Beleg: Keine Trustpilot-/Google-Bewertungen sichtbar, keine Medienerwähnungen. | Regel: Website-Reputation messbar durch externe Quellen. | Bewertung: Reputation nicht sichtbar.',improvement:'Integriere Kundenbewertungs-Widget und dokumentiere Medienerwähnungen.'},
+  {id:'4.2',status:'red',   finding:'Beleg: Keine Autor-Bylines, keine Redakteursprofile verlinkt. | Regel: Inhaltsverantwortung muss zuordenbar sein. | Bewertung: Kein Autor identifizierbar.',improvement:'Füge Autor-Bylines mit verlinkten Redakteursprofilen zu allen Artikeln hinzu.'},
+  {id:'4.3',status:'green', finding:'Beleg: Vollständiges Impressum mit Handelsregistereintrag und Verantwortlichem i.S.v. §5 TMG. | Regel: Rechtliche Angaben vollständig und korrekt. | Bewertung: Impressum korrekt.',improvement:''},
+  {id:'4.4',status:'red',   finding:'Beleg: Nur Kontaktformular ohne E-Mail-Adresse oder Telefonnummer. | Regel: Mindestens eine direkte Kontaktmöglichkeit erforderlich. | Bewertung: Kontaktmöglichkeiten unzureichend.',improvement:'Ergänze direkte E-Mail-Adresse oder Telefonnummer im Footer und auf der Kontaktseite.'},
+  {id:'4.5',status:'amber', finding:'Beleg: „Über uns"-Seite beschreibt Unternehmen sehr allgemein. | Regel: Transparenz über Betreiber und deren Motivation. | Bewertung: Transparenz ausbaubar.',improvement:'Ergänze Unternehmensgeschichte, Team-Fotos und Angaben zur redaktionellen Unabhängigkeit.'},
+  {id:'4.6',status:'green', finding:'Beleg: Keine versteckten Werbekooperationen erkennbar, Affiliate-Hinweis im Footer vorhanden. | Regel: Interessenkonflikte müssen offen kommuniziert werden. | Bewertung: Ausreichend transparent.',improvement:''},
+  {id:'5.1',status:'green', finding:'Beleg: Keine Fake-Buttons, keine irreführenden UI-Patterns. | Regel: Kein täuschendes Design (Dark Patterns). | Bewertung: Design ist fair.',improvement:''},
+  {id:'5.2',status:'green', finding:'Beleg: Vergleichstabelle sofort sichtbar, kein Interstitial-Blocking. | Regel: Hauptinhalt ohne Barrieren zugänglich. | Bewertung: Inhalt zugänglich.',improvement:''},
+  {id:'5.3',status:'green', finding:'Beleg: Domain sauber, keine Spam-Signale, keine übertriebenen Versprechen. | Regel: Keine Scam/Spam-Merkmale. | Bewertung: Kein Scam.',improvement:''},
+  {id:'5.4',status:'green', finding:'Beleg: Kein anstößiger Inhalt, keine Schadsoftware-Indikatoren. | Regel: Inhalt darf nicht schaden. | Bewertung: Keine schädlichen Inhalte.',improvement:''},
+  {id:'5.5',status:'green', finding:'Beleg: Tarifinformationen plausibel, keine nachweislich falschen Behauptungen. | Regel: Keine gefährlichen Fehlinformationen. | Bewertung: Keine Fehlinformationen.',improvement:''},
+  {id:'5.6',status:'green', finding:'Beleg: Keine Anzeichen für Hacking, Malware oder unbefugte Inhalte. | Regel: Seite darf nicht kompromittiert sein. | Bewertung: Seite sicher.',improvement:''},
+  {id:'5.7',status:'green', finding:'Beleg: Domain konsistent für Energievergleich genutzt, kein Zweckwechsel erkennbar. | Regel: Domain muss für angekündigten Zweck genutzt werden. | Bewertung: Konsistente Nutzung.',improvement:''},
+  {id:'6.1',status:'red',   finding:'Beleg: LCP 4.8s (Richtwert: <2.5s), CLS 0.23 (Richtwert: <0.1), TBT 580ms (Richtwert: <200ms). | Regel: Core Web Vitals sind Ranking-Faktor. | Bewertung: Alle drei Metriken im roten Bereich.',improvement:'Bilder in WebP konvertieren, Lazy Loading aktivieren, JavaScript-Blocker identifizieren und defer-Loading einrichten.'},
+  {id:'6.2',status:'amber', finding:'Beleg: Responsive Design vorhanden, Tabellen auf Mobilgeräten jedoch horizontal scrollbar ohne Hinweis. | Regel: Vollständige Mobile-Tauglichkeit erforderlich. | Bewertung: Mobile-Erfahrung eingeschränkt.',improvement:'Vergleichstabelle auf Mobile in Karten-Layout umwandeln oder Scroll-Hinweis ergänzen.'},
+  {id:'6.3',status:'amber', finding:'Beleg: Title-Tag korrekt, Meta-Description fehlt auf 40% der Seiten (automatisch generiert). | Regel: Seitentitel und Meta-Description sollten optimiert sein. | Bewertung: Meta-Beschreibungen unvollständig.',improvement:'Individuelle Meta-Descriptions für alle Tarifvergleichsseiten einpflegen.'},
+  {id:'6.4',status:'red',   finding:'Beleg: Kein Schema.org-Markup gefunden (weder Product, Offer noch FAQPage). | Regel: Strukturierte Daten verbessern SERP-Sichtbarkeit. | Bewertung: Keine strukturierten Daten.',improvement:'Implementiere FAQPage, Product und Offer-Schema auf allen Vergleichsseiten.'},
+  {id:'6.5',status:'green', finding:"Beleg: HTTPS aktiv, gültiges SSL-Zertifikat (Let's Encrypt, gültig bis 09/2026). | Regel: HTTPS als Mindeststandard. | Bewertung: Verbindung sicher.",improvement:''},
+  {id:'7.1',status:'amber', finding:'Beleg: Sidebar zeigt themenfremde Widgets (Reise-Angebote). | Regel: SC sollte Nutzer beim Hauptziel unterstützen. | Bewertung: SC teilweise irrelevant.',improvement:'Ersetze themenfremde Sidebar-Inhalte durch energierelevante Links (Zählerstand-Rechner, FAQ).'},
+  {id:'7.2',status:'green', finding:'Beleg: Keine Werbeanzeigen auf Seite erkennbar (keine AdSense-Tags). | Regel: Vorhandene Werbung muss gekennzeichnet sein. | Bewertung: Keine Werbung vorhanden.',improvement:''},
+  {id:'7.3',status:'green', finding:'Beleg: Kein Pop-up, kein Interstitial, keine Push-Notification-Anfrage. | Regel: Werbung darf Nutzerfluss nicht unterbrechen. | Bewertung: Kein aufdringliches Element.',improvement:''},
+  {id:'8.1',status:'amber', finding:'Beleg: Keyword „Strom Tarife Vergleich" → Transaktionale Absicht; Seite informiert, führt aber nicht klar zur Entscheidung. | Regel: Suchabsicht (Intent) muss vollständig getroffen werden. | Bewertung: Absicht teilweise erfüllt.',improvement:'Füge klare Handlungsaufforderungen und Entscheidungshilfen (z.B. Tarifrechner) hinzu.'},
+  {id:'8.2',status:'amber', finding:'Beleg: Ökostrom-Tarife erwähnt aber nicht detailliert verglichen; Gas fehlt vollständig. | Regel: Vollständige Antwort auf die Suchanfrage. | Bewertung: Antwort unvollständig.',improvement:'Erweitere auf alle relevanten Energiearten und filtere nach relevanten Nutzerbedürfnissen.'},
+  {id:'8.3',status:'amber', finding:'Beleg: Letzte Aktualisierung März 2023, aktuelle Preisänderungen nicht reflektiert. | Regel: Aktualität der Antwort bei Preisvergleichen kritisch. | Bewertung: Antwort veraltet.',improvement:'Regelmäßige Datenpflege-Routinen einführen, „Zuletzt aktualisiert"-Datum prominent anzeigen.'},
+  {id:'8.4',status:'amber', finding:'Beleg: Fachbegriffe (kWh, Grundpreis, Arbeitspreis) werden nicht erklärt. | Regel: Verständlichkeit für die anvisierte Zielgruppe. | Bewertung: Für Laien schwer verständlich.',improvement:'Ergänze Glossar oder Tooltips für Fachbegriffe direkt in der Vergleichstabelle.'},
+];
+
+async function startDemo(){
+  document.getElementById('btn-start').disabled=true;
+  document.getElementById('btn-demo').disabled=true;
+  document.getElementById('progress-section').style.display='block';
+  document.getElementById('progress-bar-wrap').style.display='block';
+  document.getElementById('loader-wrap').style.display='block';
+  document.getElementById('status-msg').style.display='block';
+  document.getElementById('progress-pct').style.display='';
+  document.getElementById('results-section').style.display='none';
+  document.getElementById('skeleton-wrap').style.display='block';
+  document.getElementById('log-wrap').classList.remove('collapsed');
+  document.getElementById('log-box').innerHTML='';
+  analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
+  gscData=null;serpData=null;backlinkData=null;psiData=null;
+  analysisStartTime=Date.now();lastPct=0;
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(updateTimer,1000);
+  document.getElementById('progress-timer').textContent='';
+
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  currentUrl='https://www.beispiel-energie.de/strom/tarife';
+  ymylResult='none';
+
+  const ud=document.getElementById('url-display');
+  ud.textContent=currentUrl;ud.style.display='block';
+
+  setProgress(2,'Demo-Daten laden…','Simulierte Analyse…');
+  log('⚡ Demo-Modus — keine echten API-Aufrufe');
+  await sleep(350);
+  log('HTML abgerufen (48.3 KB)','ok');
+  setProgress(10);
+  await sleep(250);
+  log('YMYL-Klassifikation: none','ok');
+  setProgress(13);
+  await sleep(200);
+  log('Starte 21 SQEG-Mini-Calls (Demo)…');
+
+  for(let i=0;i<MINI_CALLS.length;i++){
+    await sleep(60);
+    const names=MINI_CALLS[i].map(id=>CRITERIA.find(c=>c.id===id)?.name||id).join(' · ');
+    log('✓ '+names,'ok');
+    setProgress(13+((i+1)/21)*77);
+  }
+
+  // Enrich demo results with CRITERIA metadata
+  analysisResults=DEMO_RESULTS.map(r=>{
+    const c=CRITERIA.find(x=>x.id===r.id)||{};
+    return{...r,category:c.cat||'',criterion:c.name||r.id,sqeg_ref:c.ref||''};
+  });
+
+  setProgress(92,'Ergebnisse rendern…','Fast fertig…');
+  renderResults('Strom Tarife Vergleich');
+  setProgress(100,'Fertig!','Demo-Analyse abgeschlossen.');
+  await sleep(600);
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  const totalSec=Math.round((Date.now()-analysisStartTime)/1000);
+  document.getElementById('progress-timer').textContent='Fertig in '+formatTime(totalSec);
+  document.getElementById('skeleton-wrap').style.display='none';
+  document.getElementById('progress-bar-wrap').style.display='none';
+  document.getElementById('loader-wrap').style.display='none';
+  document.getElementById('status-msg').style.display='none';
+  document.getElementById('progress-label').textContent='Demo abgeschlossen';
+  document.getElementById('results-section').style.display='block';
+  document.getElementById('log-wrap').classList.add('collapsed');
+  document.getElementById('btn-start').disabled=false;
+  document.getElementById('btn-demo').disabled=false;
+}
+
 // === START ANALYSIS ===
 async function startAnalysis(){
   const urlVal=document.getElementById('url-input').value.trim();
@@ -770,6 +891,7 @@ async function startAnalysis(){
   if(currentMode==='html'&&!htmlVal){alert('Bitte HTML einfügen.');return}
 
   document.getElementById('btn-start').disabled=true;
+  document.getElementById('btn-demo').disabled=true;
   document.getElementById('progress-section').style.display='block';
   document.getElementById('progress-bar-wrap').style.display='block';
   document.getElementById('loader-wrap').style.display='block';
@@ -891,6 +1013,7 @@ async function startAnalysis(){
     setProgress(0,'Fehler',err.message);
   }
   document.getElementById('btn-start').disabled=false;
+  document.getElementById('btn-demo').disabled=false;
 }
 // === API HELPER ===
 async function callApi(messages,systemPrompt,maxTokens=2000){
