@@ -45,8 +45,7 @@ button{font-family:inherit}
 .app-shell{display:flex;min-height:100vh}
 .sidebar{
   width:220px;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:100;
-  background:#fff;border-right:1px solid var(--border);
-  box-shadow:2px 0 0 var(--border);
+  background:var(--bg3);border-right:1px solid var(--border2);
   display:flex;flex-direction:column;overflow-y:auto;
 }
 .sidebar-logo{
@@ -74,9 +73,9 @@ button{font-family:inherit}
   transition:background .12s,color .12s;font-family:inherit;font-size:13px;font-weight:500;
 }
 .nav-item svg{flex-shrink:0;opacity:.6}
-.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item:hover{background:var(--bg4);color:var(--text)}
 .nav-item:hover svg{opacity:1}
-.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600;border-left:2px solid var(--accent);padding-left:8px}
 .nav-item.active svg{opacity:1}
 .sidebar-footer{
   padding:12px 20px;border-top:1px solid var(--border);font-size:11px;
@@ -84,8 +83,13 @@ button{font-family:inherit}
 }
 .sidebar-footer a{color:var(--text3);font-size:11px;transition:color .12s}
 .sidebar-footer a:hover{color:var(--red)}
-.main-content{margin-left:220px;flex:1;min-width:0}
-.container{max-width:960px;margin:0 auto;padding:32px 32px 48px}
+.main-content{margin-left:220px;flex:1;min-width:0;background:#fff}
+.workspace-header{height:56px;border-bottom:1px solid var(--border);background:#fff;display:flex;align-items:center;position:sticky;top:0;z-index:50}
+.workspace-header-inner{max-width:960px;margin:0 auto;padding:0 32px;display:flex;align-items:center;width:100%;gap:12px}
+.workspace-title{font-size:14px;font-weight:600;color:var(--text)}
+.workspace-divider{width:1px;height:16px;background:var(--border2);flex-shrink:0}
+.workspace-subtitle{font-size:12px;color:var(--text3)}
+.container{max-width:960px;margin:0 auto;padding:24px 32px 48px}
 .tool-panel{display:none}
 .tool-panel.active{display:block}
 .section-divider{display:flex;align-items:center;gap:12px;margin:28px 0 16px}
@@ -157,6 +161,8 @@ button{font-family:inherit}
   box-shadow:var(--shadow-sm);
 }
 .input-card.input-dimmed{opacity:.4;pointer-events:none;transition:opacity .3s}
+#panel-sqeg>.input-card{border-left:3px solid var(--accent)}
+#progress-section .input-card{background:var(--bg3);border-color:var(--border);box-shadow:none}
 .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .card-icon{
   width:38px;height:38px;background:var(--accent-bg);border:1px solid var(--accent-border);
@@ -439,6 +445,13 @@ button{font-family:inherit}
   </div>
 </aside>
 <div class="main-content">
+<header class="workspace-header">
+  <div class="workspace-header-inner">
+    <span class="workspace-title">SQEG Analyzer</span>
+    <span class="workspace-divider"></span>
+    <span class="workspace-subtitle">Google Search Quality Evaluator Guidelines</span>
+  </div>
+</header>
 <div class="container">
 <div class="tool-panel active" id="panel-sqeg">
   <div class="input-card">
@@ -520,6 +533,11 @@ button{font-family:inherit}
   </div>
 
   <div id="results-section" style="display:none">
+    <div class="section-divider" style="margin-top:4px">
+      <div class="section-divider-line"></div>
+      <span class="section-divider-label">Analyseergebnis</span>
+      <div class="section-divider-line"></div>
+    </div>
     <!-- Score Hero -->
     <div class="score-hero" id="score-hero">
       <div class="score-hero-num green" id="score-hero-num">–</div>
