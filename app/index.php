@@ -270,6 +270,7 @@ button{font-family:inherit}
 .score-hero-bar.amber{background:linear-gradient(90deg,#D97706,#FCD34D)}
 .score-hero-bar.red{background:linear-gradient(90deg,#DC2626,#F87171)}
 .score-hero-chips{display:flex;gap:8px;flex-wrap:wrap}
+.score-hero-interp{font-size:12px;color:var(--text2);line-height:1.4;margin:4px 0 8px}
 .score-chip{
   display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
   border-radius:999px;border:1px solid var(--border2);background:var(--bg3);
@@ -524,6 +525,7 @@ button{font-family:inherit}
       <div class="score-hero-divider"></div>
       <div class="score-hero-meta">
         <div id="score-hero-level" class="score-hero-level green">High</div>
+        <div class="score-hero-interp" id="score-hero-interp"></div>
         <div class="score-hero-bar-wrap">
           <div class="score-hero-bar-bg"><div class="score-hero-bar green" id="score-hero-bar" style="width:0%"></div></div>
         </div>
@@ -1205,6 +1207,13 @@ function calcScore(){
 function scoreToLevel(s){
   if(s>=85)return'Highest';if(s>=70)return'High';if(s>=50)return'Medium';if(s>=30)return'Low';return'Lowest';
 }
+function getScoreInterpretation(s){
+  if(s>=90)return{label:'Sehr gute Qualit\u00e4t',sentence:'Sehr hohe Qualit\u00e4t mit nur geringem Optimierungsbedarf.'};
+  if(s>=75)return{label:'Gute Qualit\u00e4t',sentence:'Gute Qualit\u00e4t mit kleineren Optimierungsm\u00f6glichkeiten.'};
+  if(s>=60)return{label:'Mittlere Qualit\u00e4t',sentence:'Solide Basis mit relevanten Optimierungspotenzialen.'};
+  if(s>=40)return{label:'Niedrige Qualit\u00e4t',sentence:'Deutliche Defizite mit priorit\u00e4rem Optimierungsbedarf.'};
+  return{label:'Sehr niedrige Qualit\u00e4t',sentence:'Kritischer Zustand mit hohem Handlungsdruck.'};
+}
 
 // === EXECUTIVE SUMMARY ===
 function renderExecSummary({bewertung,interpretation,probleme,schritte}){
@@ -1260,11 +1269,9 @@ async function generateExecSummary(){
   // Demo mode: static data, no API call
   if(isDemoMode){
     const _dScore=Math.round(calcScore());
-    const _dHasLowest=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
-    const _dLevel=_dHasLowest?'Lowest':scoreToLevel(_dScore);
-    const _dLevelDE={Highest:'Hervorragende Qualität',High:'Gute Qualität',Medium:'Mittlere Qualität',Low:'Niedrige Qualität',Lowest:'Kritische Qualität'};
+    const _dInterp=getScoreInterpretation(_dScore);
     renderExecSummary({
-      bewertung:`${_dScore} / 100 – ${_dLevelDE[_dLevel]||'Mittlere Qualität'}`,
+      bewertung:`${_dScore} / 100 \u2013 ${_dInterp.label}`,
       interpretation:'Vertrauenssignale fehlen, Tarifinhalte sind veraltet und Core Web Vitals liegen im kritischen Bereich.',
       probleme:[
         {label:'Keine Autorenschaft erkennbar',explanation:'Nutzer finden keine Person, der sie die Informationen zuordnen können.'},
@@ -1295,8 +1302,8 @@ async function generateExecSummary(){
 Antworte AUSSCHLIESSLICH in folgendem Format – keine Einleitung, kein Abschlusstext:
 
 Gesamtbewertung:
-[X / 100 – Einordnung]
-[genau 1 kurzer Satz: benennt 2–3 wichtigste Problemfelder, keine generischen Aussagen]
+[X / 100 – Einordnung] ← Einordnung MUSS exakt lauten: Sehr niedrige Qualität / Niedrige Qualität / Mittlere Qualität / Gute Qualität / Sehr gute Qualität
+[genau 1 kurzer Satz: benennt 2–3 wichtigste Problemfelder, max. 15 Wörter, keine generischen Aussagen]
 
 Hauptprobleme:
 ✖ [Problem-Titel, max. 10–12 Wörter]
@@ -1320,7 +1327,9 @@ Global-Regeln:
   const msg=`URL: ${currentUrl}\nScore: ${score} / 100 – ${level}\nYMYL: ${ymylResult||'none'}\n\nProbleme (rot, nach Gewicht):\n${fmtCrit(reds)}\n\nVerbesserungspotenziale (amber):\n${fmtCrit(ambers)}\n\nPositive Aspekte:\n${greens.slice(0,4).map(r=>(CRITERIA.find(x=>x.id===r.id)||{}).name||r.id).join(', ')}`;
   try{
     const text=await callApi([{role:'user',content:msg}],sys,700);
-    renderExecSummary(parseExecSummary(text));
+    const parsed=parseExecSummary(text);
+    parsed.bewertung=`${score} / 100 \u2013 ${getScoreInterpretation(score).label}`;
+    renderExecSummary(parsed);
   }catch(e){
     document.getElementById('exec-summary-loading').style.display='none';
     document.getElementById('exec-summary-content').innerHTML=`<div style="color:var(--text3);font-size:13px">Executive Summary konnte nicht erstellt werden.</div>`;
@@ -1342,6 +1351,8 @@ function renderResults(keyword){
   document.getElementById('score-hero-num').className='score-hero-num '+cls;
   const levelEl=document.getElementById('score-hero-level');
   levelEl.textContent=level; levelEl.className='score-hero-level '+cls;
+  const interp=getScoreInterpretation(Math.round(score));
+  document.getElementById('score-hero-interp').textContent=interp.sentence;
   const bar=document.getElementById('score-hero-bar');
   bar.className='score-hero-bar '+cls; bar.style.width=Math.round(score)+'%';
   // YMYL chip
