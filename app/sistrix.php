@@ -112,15 +112,23 @@ if ($action === 'url_data') {
         exit;
     }
 
+    // Domain aus URL extrahieren (für domain.overview)
+    $parsedUrl = parse_url($url);
+    $domain    = preg_replace('/^www\./i', '', $parsedUrl['host'] ?? '');
+
     // Beide Endpunkte parallel über cURL Multi fetchen
     $handles = [];
     $multi   = curl_multi_init();
-    $base    = ['api_key' => $apiKey, 'format' => 'json', 'country' => 'de', 'url' => $url];
+    $baseParams = ['api_key' => $apiKey, 'format' => 'json', 'country' => 'de'];
 
-    foreach (['domain.overview' => [], 'keyword.domain.seo' => ['limit' => 20]] as $ep => $extra) {
-        $params = array_merge($base, $extra);
-        $epUrl  = 'https://api.sistrix.com/' . $ep . '?' . http_build_query($params);
-        $ch     = curl_init($epUrl);
+    $endpoints = [
+        'domain.overview'    => array_merge($baseParams, ['domain' => $domain]),
+        'keyword.domain.seo' => array_merge($baseParams, ['url' => $url, 'limit' => 20]),
+    ];
+
+    foreach ($endpoints as $ep => $params) {
+        $epUrl = 'https://api.sistrix.com/' . $ep . '?' . http_build_query($params);
+        $ch    = curl_init($epUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 15,
@@ -146,44 +154,38 @@ if ($action === 'url_data') {
     curl_multi_close($multi);
 
     // ── domain.overview parsen ──
-    $overview   = $raw['domain.overview']['answer'][0]['domain.overview'][0] ?? null;
+    // Struktur: answer[0]['result'][0] mit flachen Feldern (kein @ Prefix)
+    $overview   = $raw['domain.overview']['answer'][0]['result'][0] ?? null;
     $visibility = null;
     $kwCount    = null;
     if ($overview) {
-        $visTxt     = $overview['sichtbarkeitsindex'][0]['#text'] ?? null;
-        $visibility = $visTxt !== null ? round((float)$visTxt, 4) : null;
-        $kwTxt      = $overview['kwcount.seo'][0]['#text'] ?? null;
-        $kwCount    = $kwTxt !== null ? (int)$kwTxt : null;
+        $vis        = $overview['sichtbarkeitsindex'] ?? null;
+        $visibility = $vis !== null ? round((float)$vis, 4) : null;
+        $kwc        = $overview['kwcount.seo'] ?? null;
+        $kwCount    = $kwc !== null ? (int)$kwc : null;
     }
 
     // ── keyword.domain.seo parsen ──
-    $kwItems  = $raw['keyword.domain.seo']['answer'][0]['keyword.domain.seo'] ?? [];
+    // Struktur: answer[0]['result'] — flache Felder: kw, position, traffic
+    $kwItems  = $raw['keyword.domain.seo']['answer'][0]['result'] ?? [];
     $keywords = [];
     if (is_array($kwItems)) {
         foreach (array_slice($kwItems, 0, 20) as $kw) {
             if (!is_array($kw)) continue;
             $keywords[] = [
-                'keyword'  => (string)($kw['@kw']       ?? ''),
-                'position' => (int)($kw['@position']    ?? 0),
-                'volume'   => (int)($kw['@traffic']     ?? 0),
+                'keyword'  => (string)($kw['kw']       ?? ''),
+                'position' => (int)($kw['position']    ?? 0),
+                'volume'   => (int)($kw['traffic']     ?? 0),
             ];
         }
     }
 
-    $noData = ($visibility === null && empty($keywords));
     echo json_encode([
         'success'    => true,
         'visibility' => $visibility,
         'kw_count'   => $kwCount,
         'keywords'   => $keywords,
-        'no_data'    => $noData,
-        // Temporäres Debug-Feld — nach Diagnose entfernen
-        '_debug'     => $noData ? [
-            'domain.overview_keys'      => array_keys($raw['domain.overview']['answer'][0] ?? []),
-            'domain.overview_raw'       => $raw['domain.overview']['answer'][0] ?? $raw['domain.overview'] ?? null,
-            'keyword.domain.seo_keys'   => array_keys($raw['keyword.domain.seo']['answer'][0] ?? []),
-            'keyword.domain.seo_raw'    => array_slice($raw['keyword.domain.seo']['answer'][0] ?? [], 0, 2),
-        ] : null,
+        'no_data'    => ($visibility === null && empty($keywords)),
     ]);
     exit;
 }
