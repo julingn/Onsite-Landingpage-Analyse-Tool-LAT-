@@ -115,6 +115,13 @@ button{font-family:inherit}
 .btn-demo{height:42px;padding:0 14px;border:1px dashed var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:background .1s,border-color .1s;flex-shrink:0}
 .btn-demo:hover{background:var(--bg4);border-color:var(--text3);color:var(--text)}
 .btn-demo:disabled{opacity:.4;cursor:not-allowed}
+/* Toggle Switch */
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--bg4);border-radius:20px;transition:.2s;border:1px solid var(--border2)}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.toggle-switch input:checked+.toggle-slider{background:var(--accent);border-color:var(--accent)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(16px)}
 /* Log Collapse */
 .log-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:8px}
 .log-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;cursor:pointer;background:var(--bg3);user-select:none;transition:background .1s}
@@ -622,6 +629,21 @@ button{font-family:inherit}
         <div class="success-msg" id="msg-password">✓ Passwort geändert.</div>
         <div class="err-box" id="err-password" style="display:none;margin-top:10px;"></div>
       </form>
+    </div>
+    <div style="height:1px;background:var(--border);margin:24px 0"></div>
+    <div class="settings-section">
+      <div class="settings-section-title">Entwickler-Optionen</div>
+      <div class="settings-section-desc">Optionen für Design-Tests und Entwicklung.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">Demo-Button anzeigen</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:3px">Simulierte Analyse ohne API-Aufrufe in der Eingabe-Card einblenden.</div>
+        </div>
+        <label class="toggle-switch" title="Demo-Button ein-/ausblenden">
+          <input type="checkbox" id="setting-demo-btn" onchange="saveDemoSetting(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -1382,6 +1404,18 @@ async function savePassword(e){
     else{msgEl.style.display='block';document.getElementById('s-pw').value='';document.getElementById('s-pw2').value='';setTimeout(()=>msgEl.style.display='none',3000)}
   }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
 }
+// === DEMO SETTING ===
+function loadDemoSetting(){
+  const enabled=localStorage.getItem('lat_demo_btn')!=='false';
+  document.getElementById('btn-demo').style.display=enabled?'':'none';
+  const cb=document.getElementById('setting-demo-btn');
+  if(cb)cb.checked=enabled;
+}
+function saveDemoSetting(checked){
+  localStorage.setItem('lat_demo_btn',checked?'true':'false');
+  document.getElementById('btn-demo').style.display=checked?'':'none';
+}
+loadDemoSetting();
 </script>
 </body>
 </html>
