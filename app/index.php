@@ -1259,8 +1259,12 @@ async function generateExecSummary(){
   document.getElementById('exec-summary').style.display='block';
   // Demo mode: static data, no API call
   if(isDemoMode){
+    const _dScore=Math.round(calcScore());
+    const _dHasLowest=analysisResults.some(r=>getEffectiveWeight(r.id)>=4&&r.status==='red');
+    const _dLevel=_dHasLowest?'Lowest':scoreToLevel(_dScore);
+    const _dLevelDE={Highest:'Hervorragende Qualität',High:'Gute Qualität',Medium:'Mittlere Qualität',Low:'Niedrige Qualität',Lowest:'Kritische Qualität'};
     renderExecSummary({
-      bewertung:'62 / 100 – Mittelmäßige Qualität',
+      bewertung:`${_dScore} / 100 – ${_dLevelDE[_dLevel]||'Mittlere Qualität'}`,
       interpretation:'Vertrauenssignale fehlen, Tarifinhalte sind veraltet und Core Web Vitals liegen im kritischen Bereich.',
       probleme:[
         {label:'Keine Autorenschaft erkennbar',explanation:'Nutzer finden keine Person, der sie die Informationen zuordnen können.'},
