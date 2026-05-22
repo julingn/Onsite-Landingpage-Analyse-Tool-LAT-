@@ -332,7 +332,7 @@ button{font-family:inherit}
 .ymyl-badge.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
 .ymyl-badge.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
 .ymyl-badge.green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
 .stat-box{padding:16px;border-radius:var(--radius-lg);border:1px solid;text-align:center;background:var(--bg2);box-shadow:var(--shadow-sm)}
 .stat-box.green{border-color:var(--green-border)}
 .stat-box.amber{border-color:var(--amber-border)}
@@ -430,13 +430,6 @@ button{font-family:inherit}
 .exec-summary-problem-label{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:2px}
 .exec-summary-problem-arrow{font-size:12px;color:var(--text2);line-height:1.5;padding-left:14px}
 .exec-summary-loading{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13px;padding:4px 0}
-.pq-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
-.pq-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s}
-.pq-card:hover{box-shadow:var(--shadow-md);border-color:var(--border2)}
-.pq-card-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.pq-card-id{font-family:'Geist Mono','Courier New',monospace;font-size:10px;color:var(--text3)}
-.pq-card-name{font-size:13px;font-weight:600;color:var(--text)}
-.pq-card-body{font-size:12px;color:var(--text2);line-height:1.6}
 .export-bar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
 /* === SKELETON SCREENS === */
 .skeleton{border-radius:var(--radius);background:var(--bg4);animation:skel-pulse 3s ease-in-out infinite}
@@ -454,7 +447,6 @@ button{font-family:inherit}
   .skeleton-clusters{grid-template-columns:repeat(2,1fr)}
   .cluster-overview{grid-template-columns:repeat(2,1fr)}
   .priority-matrix{grid-template-columns:1fr}
-  .pq-cards{grid-template-columns:1fr}
   .score-hero{flex-direction:column;gap:16px}
   .score-hero-divider{display:none}
   .score-hero-num{font-size:48px}
@@ -622,7 +614,6 @@ button{font-family:inherit}
       <div class="stat-box green"><div class="stat-num" id="cnt-g">0</div><div class="stat-lbl">✓ Bestanden</div></div>
       <div class="stat-box amber"><div class="stat-num" id="cnt-a">0</div><div class="stat-lbl">◑ Verbesserungswürdig</div></div>
       <div class="stat-box red"><div class="stat-num" id="cnt-r">0</div><div class="stat-lbl">✗ Fehlerhaft</div></div>
-      <div class="stat-box blue"><div class="stat-num" id="cnt-pq">7</div><div class="stat-lbl">☐ PQ-Erweitert</div></div>
     </div>
     <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">Cluster-Übersicht</span><div class="section-divider-line"></div></div>
     <div class="cluster-overview" id="cluster-overview"></div>
@@ -657,14 +648,11 @@ button{font-family:inherit}
       <button class="filter-btn" data-filter="green" onclick="setFilter('green',this)">✓ Bestanden</button>
       <button class="filter-btn" data-filter="amber" onclick="setFilter('amber',this)">◑ Verbesserbar</button>
       <button class="filter-btn" data-filter="red" onclick="setFilter('red',this)">✗ Fehlerhaft</button>
-      <button class="filter-btn" data-filter="pq" onclick="setFilter('pq',this)">☐ PQ-Erweitert</button>
     </div>
     <table class="criteria-table" id="criteria-table">
       <thead><tr><th style="width:44px">Status</th><th>Kriterium</th><th>Befund &amp; Bewertung</th><th style="width:28px"></th></tr></thead>
       <tbody id="criteria-tbody"></tbody>
     </table>
-    <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">PQ-Erweitert (e1–e7)</span><div class="section-divider-line"></div></div>
-    <div class="pq-cards" id="pq-cards"></div>
   </div>
 </div><!-- /panel-sqeg -->
 <div class="tool-panel" id="panel-settings">
@@ -1449,7 +1437,6 @@ function renderResults(keyword){
   document.getElementById('cnt-g').textContent=g;
   document.getElementById('cnt-a').textContent=a;
   document.getElementById('cnt-r').textContent=r;
-  document.getElementById('cnt-pq').textContent=analysisResults.filter(r=>r.id.startsWith('5.')).length||7;
 
   document.querySelectorAll('.sqeg-level').forEach(el=>el.classList.toggle('active',el.dataset.level===level));
 
@@ -1479,7 +1466,6 @@ function renderResults(keyword){
   renderPriorityMatrix();
   renderClusterOverview();
   renderCriteriaTable(analysisResults,'all');
-  renderPqCards();
   generateExecSummary();
 }
 
@@ -1555,7 +1541,6 @@ function setFilter(filter,btn){
   currentFilter=filter;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(filter==='pq'){renderPqCards();document.getElementById('criteria-tbody').innerHTML='';return}
   renderCriteriaTable(analysisResults,filter);
 }
 
@@ -1596,17 +1581,6 @@ function toggleCritRow(rowId,detailId){
   const detail=document.getElementById(detailId);
   const open=row.classList.toggle('expanded');
   detail.classList.toggle('visible',open);
-}
-
-function renderPqCards(){
-  const c=document.getElementById('pq-cards');
-  const cluster5=analysisResults.filter(r=>r.id.startsWith('5.'));
-  if(!cluster5.length){c.innerHTML='<div style="color:var(--text3);font-size:13px;grid-column:1/-1">Sicherheits-Checks werden nach der Analyse angezeigt.</div>';return}
-  c.innerHTML=cluster5.map(r=>{
-    const crit=CRITERIA.find(x=>x.id===r.id)||{name:r.id,ref:r.sqeg_ref||''};
-    const sym=r.status==='green'?'✓':r.status==='amber'?'◑':'✗';
-    return`<div class="pq-card"><div class="pq-card-header"><div class="status-dot ${r.status}">${sym}</div><div><div class="pq-card-id">${escHtml(r.id)} · ${escHtml(crit.ref)}</div><div class="pq-card-name">${escHtml(crit.name)}</div></div></div><div class="pq-card-body">${escHtml(r.finding||'')}${r.improvement?`<div class="suggest" style="margin-top:8px">💡 ${escHtml(r.improvement)}</div>`:''}</div></div>`;
-  }).join('');
 }
 
 // === EXPORT ===
