@@ -110,6 +110,15 @@ if ($action === 'save_gsc') {
     }
 }
 
+if ($action === 'save_sistrix') {
+    $key = trim($_POST['sistrix_api_key'] ?? '');
+    if (!empty($key) && strlen($key) < 8) {
+        $errors[] = 'Sistrix API-Key scheint ungültig zu sein.';
+    } else {
+        if (!empty($key)) $settings['sistrix_api_key'] = $key;
+    }
+}
+
 if (!empty($errors)) {
     http_response_code(422);
     echo json_encode(['error' => implode(' ', $errors)]);

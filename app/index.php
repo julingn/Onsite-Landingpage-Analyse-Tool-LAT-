@@ -632,6 +632,10 @@ button{font-family:inherit}
       <div class="needs-met-label">GSC · Top-Keywords (90 Tage)</div>
       <div id="gsc-panel-content"></div>
     </div>
+    <div class="needs-met-block" id="sistrix-panel" style="display:none">
+      <div class="needs-met-label">Sistrix · URL-Sichtbarkeit (DE)</div>
+      <div id="sistrix-panel-content"></div>
+    </div>
     <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">Prioritäten-Matrix</span><div class="section-divider-line"></div></div>
     <div class="priority-matrix">
       <div class="priority-col"><div class="priority-col-header red">🔴 Sofort angehen</div><div id="pri-sofort"></div></div>
@@ -716,6 +720,26 @@ button{font-family:inherit}
         <button type="submit" class="btn-save">Passwort ändern</button>
         <div class="success-msg" id="msg-password">✓ Passwort geändert.</div>
         <div class="err-box" id="err-password" style="display:none;margin-top:10px;"></div>
+      </form>
+    </div>
+    <div style="height:1px;background:var(--border);margin:24px 0"></div>
+    <div class="settings-section">
+      <div class="settings-section-title">Sistrix</div>
+      <div class="settings-section-desc">API-Key für URL-spezifische Sichtbarkeitsdaten (Deutschland). Erhältlich unter app.sistrix.com/api.</div>
+      <form id="form-sistrix" onsubmit="saveSistrix(event)">
+        <div class="settings-field">
+          <label class="settings-label" for="s-sistrix">API-Key</label>
+          <div class="settings-input-wrap">
+            <input type="password" id="s-sistrix" class="settings-input" placeholder="Sistrix API-Key" autocomplete="off">
+            <button type="button" class="settings-toggle-btn" onclick="toggleSettingsPw('s-sistrix',this)">Anzeigen</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button type="submit" class="btn-save">Speichern</button>
+          <button type="button" class="btn-secondary" onclick="testSistrix()">Verbindung testen</button>
+        </div>
+        <div class="success-msg" id="msg-sistrix">✓ API-Key gespeichert.</div>
+        <div class="err-box" id="err-sistrix" style="display:none;margin-top:10px;"></div>
       </form>
     </div>
     <div style="height:1px;background:var(--border);margin:24px 0"></div>
@@ -867,7 +891,7 @@ const MINI_CALLS=[
 // === STATE ===
 let analysisResults=[],pqResults=[],e8Result=null,ymylResult=null,currentUrl='',currentHtml='';
 let isDemoMode=false;
-let gscData=null,serpData=null,backlinkData=null,psiData=null;
+let gscData=null,serpData=null,backlinkData=null,psiData=null,sistrixData=null;
 let analysisStartTime=0,timerInterval=null,lastPct=0;
 
 // === LOG / PROGRESS ===
@@ -957,7 +981,7 @@ async function startDemo(){
   document.getElementById('log-wrap').classList.remove('collapsed');
   document.getElementById('log-box').innerHTML='';
   analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
-  gscData=null;serpData=null;backlinkData=null;psiData=null;
+  gscData=null;serpData=null;backlinkData=null;psiData=null;sistrixData=null;
   analysisStartTime=Date.now();lastPct=0;
   if(timerInterval)clearInterval(timerInterval);
   timerInterval=setInterval(updateTimer,1000);
@@ -1034,7 +1058,7 @@ async function startAnalysis(){
   document.getElementById('log-wrap').classList.remove('collapsed');
   document.getElementById('log-box').innerHTML='';
   analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
-  gscData=null;serpData=null;backlinkData=null;psiData=null;
+  gscData=null;serpData=null;backlinkData=null;psiData=null;sistrixData=null;
   analysisStartTime=Date.now();lastPct=0;
   if(timerInterval)clearInterval(timerInterval);
   timerInterval=setInterval(updateTimer,1000);
@@ -1067,20 +1091,24 @@ async function startAnalysis(){
     const effectiveKeyword=keyword||'';
 
     // Externe Daten parallel abrufen (Fehler blockieren nicht)
-    setProgress(5,'Daten abrufen…','GSC · SERP · Backlinks · PageSpeed…');
-    const [gscRes,serpRes,blRes,psiRes]=await Promise.allSettled([
+    setProgress(5,'Daten abrufen…','GSC · SERP · Backlinks · PageSpeed · Sistrix…');
+    const [gscRes,serpRes,blRes,psiRes,sistrixRes]=await Promise.allSettled([
       currentMode==='url'&&currentUrl?fetchGscData(currentUrl):Promise.resolve(null),
       effectiveKeyword?fetchSerpData(effectiveKeyword):Promise.resolve(null),
       currentMode==='url'&&currentUrl?fetchBacklinkData(currentUrl):Promise.resolve(null),
       currentMode==='url'&&currentUrl?fetchPageSpeedData(currentUrl):Promise.resolve(null),
+      currentMode==='url'&&currentUrl?fetchSistrixData(currentUrl):Promise.resolve(null),
     ]);
-    gscData     = gscRes.status==='fulfilled'?gscRes.value:null;
-    serpData    = serpRes.status==='fulfilled'?serpRes.value:null;
-    backlinkData= blRes.status==='fulfilled'?blRes.value:null;
-    psiData     = psiRes.status==='fulfilled'?psiRes.value:null;
+    gscData      = gscRes.status==='fulfilled'?gscRes.value:null;
+    serpData     = serpRes.status==='fulfilled'?serpRes.value:null;
+    backlinkData = blRes.status==='fulfilled'?blRes.value:null;
+    psiData      = psiRes.status==='fulfilled'?psiRes.value:null;
+    sistrixData  = sistrixRes.status==='fulfilled'?sistrixRes.value:null;
 
     if(gscData?.keywords?.length)log(`GSC: ${gscData.keywords.length} Keywords geladen`,'ok');
     else log('GSC: keine Daten (nicht konfiguriert oder keine Treffer)');
+    if(sistrixData?.success)log(`Sistrix: Sichtbarkeit ${sistrixData.visibility??'–'} · ${sistrixData.kw_count??'?'} Keywords (DE)`,'ok');
+    else if(currentMode==='url')log('Sistrix: keine Daten (nicht konfiguriert oder keine Treffer)');
     if(serpData?.tasks?.[0]?.result?.[0]?.items)log(`SERP: Top-10 für "${effectiveKeyword}" geladen`,'ok');
     else if(effectiveKeyword)log(`SERP: keine Daten für "${effectiveKeyword}"`);
     if(backlinkData?.tasks?.[0]?.result?.[0])log('Backlinks: Profil geladen','ok');
@@ -1156,6 +1184,14 @@ async function callApi(messages,systemPrompt,maxTokens=2000){
 // === DATEN-FETCH ===
 async function fetchGscData(url){
   try{const res=await fetch('gsc.php?action=data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});const d=await res.json();return d.success?d:null;}catch(e){return null;}
+}
+async function fetchSistrixData(url){
+  try{
+    const res=await fetch('sistrix.php?action=url_data',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CSRF_TOKEN},body:JSON.stringify({url,csrf_token:CSRF_TOKEN})});
+    if(!res.ok)return null;
+    const d=await res.json();
+    return d.success?d:null;
+  }catch(e){return null;}
 }
 async function fetchSerpData(keyword){
   try{const res=await fetch('dataforseo.php?action=serp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keyword,limit:10})});return await res.json();}catch(e){return null;}
@@ -1463,6 +1499,25 @@ function renderResults(keyword){
         return`<tr><td style="padding:3px 8px 3px 0"><span style="display:inline-block;width:${bar}px;height:4px;background:var(--blue);border-radius:2px;vertical-align:middle;margin-right:6px"></span>${escHtml(k.query)}</td><td style="text-align:right;padding:3px 4px">${k.clicks}</td><td style="text-align:right;padding:3px 4px">${k.impressions}</td><td style="text-align:right;padding:3px 4px">${k.ctr}%</td><td style="text-align:right;padding:3px 4px;color:${posColor};font-weight:600">${k.position}</td></tr>`;
       }).join('')+'</tbody></table>';
   }else{gscPanel.style.display='none';}
+  const sistrixPanel=document.getElementById('sistrix-panel');
+  if(sistrixData?.success&&!sistrixData.no_data){
+    sistrixPanel.style.display='block';
+    const vis=sistrixData.visibility,kwCnt=sistrixData.kw_count,kws=sistrixData.keywords||[];
+    let html='<div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">';
+    if(vis!==null)html+=`<div style="background:var(--bg3);border-radius:var(--radius-sm);padding:8px 14px;text-align:center"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Sichtbarkeitsindex</div><div style="font-size:18px;font-weight:700;color:var(--accent)">${vis}</div></div>`;
+    if(kwCnt!==null)html+=`<div style="background:var(--bg3);border-radius:var(--radius-sm);padding:8px 14px;text-align:center"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Keywords Top\u00a0100</div><div style="font-size:18px;font-weight:700;color:var(--text)">${kwCnt.toLocaleString('de-DE')}</div></div>`;
+    html+='</div>';
+    if(kws.length){
+      const maxVol=Math.max(...kws.map(k=>k.volume),1);
+      html+='<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="color:var(--text3);font-size:11px"><th style="text-align:left;padding:3px 8px 3px 0">Keyword</th><th style="text-align:right;padding:3px 4px">Position</th><th style="text-align:right;padding:3px 4px">Suchvolumen</th></tr></thead><tbody>'
+        +kws.map(k=>{
+          const bar=Math.round((k.volume/maxVol)*60);
+          const posColor=k.position<=3?'var(--green)':k.position<=10?'var(--amber)':'var(--text3)';
+          return`<tr><td style="padding:3px 8px 3px 0"><span style="display:inline-block;width:${bar}px;height:4px;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:6px;opacity:.55"></span>${escHtml(k.keyword)}</td><td style="text-align:right;padding:3px 4px;color:${posColor};font-weight:600">${k.position}</td><td style="text-align:right;padding:3px 4px">${k.volume.toLocaleString('de-DE')}</td></tr>`;
+        }).join('')+'</tbody></table>';
+    }else{html+='<p style="font-size:12px;color:var(--text3);margin:0">Keine Keywords f\u00fcr diese URL gefunden.</p>';}
+    document.getElementById('sistrix-panel-content').innerHTML=html;
+  }else{sistrixPanel.style.display='none';}
   renderPriorityMatrix();
   renderClusterOverview();
   renderCriteriaTable(analysisResults,'all');
@@ -1633,6 +1688,48 @@ async function savePassword(e){
     if(d.error){errEl.textContent=d.error;errEl.style.display='flex'}
     else{msgEl.style.display='block';document.getElementById('s-pw').value='';document.getElementById('s-pw2').value='';setTimeout(()=>msgEl.style.display='none',3000)}
   }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
+}
+async function savePassword(e){
+  e.preventDefault();
+  const pw=document.getElementById('s-pw').value,pw2=document.getElementById('s-pw2').value;
+  const errEl=document.getElementById('err-password'),msgEl=document.getElementById('msg-password');
+  errEl.style.display='none';msgEl.style.display='none';
+  if(pw.length<8){errEl.textContent='Passwort muss mindestens 8 Zeichen lang sein.';errEl.style.display='flex';return}
+  if(pw!==pw2){errEl.textContent='Passwörter stimmen nicht überein.';errEl.style.display='flex';return}
+  const fd=new FormData();fd.append('action','save_password');fd.append('new_password',pw);fd.append('confirm_password',pw2);fd.append('csrf_token',CSRF_TOKEN);
+  try{
+    const r=await fetch('settings_save.php',{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.error){errEl.textContent=d.error;errEl.style.display='flex'}
+    else{msgEl.style.display='block';document.getElementById('s-pw').value='';document.getElementById('s-pw2').value='';setTimeout(()=>msgEl.style.display='none',3000)}
+  }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
+}
+async function saveSistrix(e){
+  e.preventDefault();
+  const key=document.getElementById('s-sistrix').value.trim();
+  const errEl=document.getElementById('err-sistrix'),msgEl=document.getElementById('msg-sistrix');
+  errEl.style.display='none';msgEl.style.display='none';
+  if(!key){errEl.textContent='Bitte einen API-Key eingeben.';errEl.style.display='flex';return}
+  const fd=new FormData();fd.append('action','save_sistrix');fd.append('sistrix_api_key',key);fd.append('csrf_token',CSRF_TOKEN);
+  try{
+    const r=await fetch('settings_save.php',{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.error){errEl.textContent=d.error;errEl.style.display='flex'}
+    else{msgEl.style.display='block';document.getElementById('s-sistrix').value='';setTimeout(()=>msgEl.style.display='none',3000)}
+  }catch(err){errEl.textContent=err.message;errEl.style.display='flex'}
+}
+async function testSistrix(){
+  const errEl=document.getElementById('err-sistrix'),msgEl=document.getElementById('msg-sistrix');
+  errEl.style.display='none';msgEl.style.display='none';
+  try{
+    const r=await fetch('sistrix.php?action=test');
+    const d=await r.json();
+    if(d.success){
+      const info=d.remaining!=null?` (${d.remaining} Credits verbleibend)`:'';
+      msgEl.textContent=`✓ Verbindung erfolgreich${info}.`;msgEl.style.display='block';
+      setTimeout(()=>msgEl.style.display='none',5000);
+    }else{errEl.textContent=d.error||'Verbindung fehlgeschlagen.';errEl.style.display='flex'}
+  }catch(err){errEl.textContent='Netzwerkfehler: '+err.message;errEl.style.display='flex'}
 }
 // === THEME ===
 function applyTheme(dark){

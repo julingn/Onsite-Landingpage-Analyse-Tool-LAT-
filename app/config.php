@@ -130,3 +130,6 @@ define('CFG_GSC_SITE_URL',        cfg('GSC_SITE_URL',        'gsc_site_url'));
 // Priorität: APP_PASSWORD_HASH (Env) > login_password_hash (settings.json)
 define('CFG_PASSWORD_HASH',       cfg('APP_PASSWORD_HASH',   'login_password_hash'));
 define('CFG_DEFAULT_PASSWORD',    'evalupro2025');
+
+// Datenquellen-Keys
+define('CFG_SISTRIX_KEY',         cfg('SISTRIX_API_KEY',     'sistrix_api_key'));
