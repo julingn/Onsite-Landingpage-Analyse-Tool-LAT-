@@ -84,7 +84,7 @@ button{font-family:inherit}
 .sidebar-footer a{color:var(--text3);font-size:11px;transition:color .12s}
 .sidebar-footer a:hover{color:var(--red)}
 .main-content{margin-left:220px;flex:1;min-width:0;background:#fff}
-.workspace-header{height:56px;border-bottom:1px solid var(--border);background:#fff;display:flex;align-items:center;position:sticky;top:0;z-index:50}
+.workspace-header{height:64px;border-bottom:1px solid var(--border);background:#fff;display:flex;align-items:center;position:sticky;top:0;z-index:50}
 .workspace-header-inner{max-width:960px;margin:0 auto;padding:0 32px;display:flex;align-items:center;width:100%;gap:12px}
 .workspace-title{font-size:14px;font-weight:600;color:var(--text)}
 .workspace-divider{width:1px;height:16px;background:var(--border2);flex-shrink:0}
@@ -93,8 +93,8 @@ button{font-family:inherit}
 .tool-panel{display:none}
 .tool-panel.active{display:block}
 .section-divider{display:flex;align-items:center;gap:12px;margin:28px 0 16px}
-.section-divider-line{flex:1;height:1px;background:var(--border)}
-.section-divider-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);white-space:nowrap}
+.section-divider-line{flex:1;height:1px;background:var(--border2)}
+.section-divider-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:var(--text2);white-space:nowrap}
 .input-row{display:flex;gap:10px;align-items:center;margin:0 0 4px}
 .url-input{
   flex:1;height:42px;padding:0 14px;border:1px solid var(--border2);border-radius:var(--radius);
@@ -161,8 +161,8 @@ button{font-family:inherit}
   box-shadow:var(--shadow-sm);
 }
 .input-card.input-dimmed{opacity:.4;pointer-events:none;transition:opacity .3s}
-#panel-sqeg>.input-card{border-left:3px solid var(--accent)}
-#progress-section .input-card{background:var(--bg3);border-color:var(--border);box-shadow:none}
+#panel-sqeg>.input-card{border-left:4px solid var(--accent);padding:28px 28px 24px}
+#progress-section .input-card{background:var(--bg3);border-color:var(--border);border-style:dashed;box-shadow:none;padding:16px 20px;margin-bottom:12px}
 .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .card-icon{
   width:38px;height:38px;background:var(--accent-bg);border:1px solid var(--accent-border);
@@ -251,7 +251,7 @@ button{font-family:inherit}
 .results-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
 .score-hero{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-xl);padding:24px 28px;margin-bottom:24px;
+  border-radius:var(--radius-xl);padding:28px 32px;margin-bottom:28px;
   box-shadow:var(--shadow);display:flex;align-items:center;gap:24px;flex-wrap:wrap;
 }
 .score-hero-num{
@@ -533,7 +533,7 @@ button{font-family:inherit}
   </div>
 
   <div id="results-section" style="display:none">
-    <div class="section-divider" style="margin-top:4px">
+    <div class="section-divider" style="margin-top:40px;margin-bottom:20px">
       <div class="section-divider-line"></div>
       <span class="section-divider-label">Analyseergebnis</span>
       <div class="section-divider-line"></div>
