@@ -287,7 +287,19 @@ button{font-family:inherit}
 .stat-box.red .stat-num{color:var(--red)}
 .stat-box.blue .stat-num{color:var(--blue)}
 .stat-lbl{font-size:11px;font-weight:500;color:var(--text3)}
-.sqeg-scale{display:flex;align-items:center;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
+/* === CLUSTER OVERVIEW === */
+.cluster-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.cluster-card{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:12px 14px;
+  box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s;
+}
+.cluster-card:hover{box-shadow:var(--shadow);border-color:var(--border2)}
+.cluster-card-donut{flex-shrink:0}
+.cluster-card-info{min-width:0}
+.cluster-card-num{font-size:10px;font-weight:600;color:var(--text3);font-family:'Geist Mono','Courier New',monospace;margin-bottom:2px}
+.cluster-card-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.35}{display:flex;align-items:center;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
 .sqeg-level{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);cursor:default;border-right:1px solid var(--border);transition:background .2s,color .2s}
 .sqeg-level:last-child{border-right:none}
 .sqeg-level.active{background:var(--accent);color:#fff}
@@ -363,6 +375,7 @@ button{font-family:inherit}
   .html-area-wrap{left:0}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .skeleton-stats{grid-template-columns:repeat(2,1fr)}
+  .cluster-overview{grid-template-columns:repeat(2,1fr)}
   .priority-matrix{grid-template-columns:1fr}
   .pq-cards{grid-template-columns:1fr}
   .score-hero{flex-direction:column;gap:16px}
@@ -496,6 +509,8 @@ button{font-family:inherit}
       <div class="stat-box red"><div class="stat-num" id="cnt-r">0</div><div class="stat-lbl">✗ Fehlerhaft</div></div>
       <div class="stat-box blue"><div class="stat-num" id="cnt-pq">7</div><div class="stat-lbl">☐ PQ-Erweitert</div></div>
     </div>
+    <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">Cluster-Übersicht</span><div class="section-divider-line"></div></div>
+    <div class="cluster-overview" id="cluster-overview"></div>
     <div class="sqeg-scale" id="sqeg-scale">
       <div class="sqeg-level" data-level="Lowest">Lowest</div>
       <div class="sqeg-level" data-level="Low">Low</div>
@@ -1062,8 +1077,53 @@ function renderResults(keyword){
       }).join('')+'</tbody></table>';
   }else{gscPanel.style.display='none';}
   renderPriorityMatrix();
+  renderClusterOverview();
   renderCriteriaTable(analysisResults,'all');
   renderPqCards();
+}
+
+function renderClusterOverview(){
+  const el=document.getElementById('cluster-overview');
+  if(!el)return;
+  const clusters=[
+    {num:'1',name:'Seitenzweck & Typ'},
+    {num:'2',name:'Inhalt & Tiefe'},
+    {num:'3',name:'E-E-A-T'},
+    {num:'4',name:'Reputation'},
+    {num:'5',name:'Schaden & Täuschung'},
+    {num:'6',name:'Technik & UX'},
+    {num:'7',name:'Werbung & SC'},
+    {num:'8',name:'Needs Met'},
+  ];
+  const R=18,SW=5,CX=24,CY=24;
+  const circ=2*Math.PI*R;
+  el.innerHTML=clusters.map(cl=>{
+    const res=analysisResults.filter(r=>r.id.startsWith(cl.num+'.'));
+    if(!res.length)return'';
+    let tw=0,ts=0;
+    res.forEach(r=>{const w=getEffectiveWeight(r.id);tw+=w;ts+=statusScore(r.status)*w});
+    const score=tw>0?Math.round(ts/tw):0;
+    const cls=score>=70?'green':score>=50?'amber':'red';
+    const color=cls==='green'?'var(--green)':cls==='amber'?'var(--amber)':'var(--red)';
+    const dash=(score/100*circ).toFixed(1);
+    const g=res.filter(r=>r.status==='green').length;
+    const a=res.filter(r=>r.status==='amber').length;
+    const rd=res.filter(r=>r.status==='red').length;
+    return`<div class="cluster-card">
+      <div class="cluster-card-donut">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--bg4)" stroke-width="${SW}"/>
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-dasharray="${dash} ${circ.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${CX} ${CY})"/>
+          <text x="${CX}" y="${CY}" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="${color}" font-family="Inter,sans-serif">${score}%</text>
+        </svg>
+      </div>
+      <div class="cluster-card-info">
+        <div class="cluster-card-num">${cl.num}</div>
+        <div class="cluster-card-name">${escHtml(cl.name)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px"><span style="color:var(--green)">${g}✓</span> <span style="color:var(--amber)">${a}◑</span> <span style="color:var(--red)">${rd}✗</span></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderPriorityMatrix(){
