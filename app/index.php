@@ -1261,16 +1261,16 @@ async function generateExecSummary(){
   if(isDemoMode){
     renderExecSummary({
       bewertung:'62 / 100 – Mittelmäßige Qualität',
-      interpretation:'E-E-A-T-Defizite, veraltete Tarifinhalte und schlechte Core Web Vitals bremsen Ranking und Conversion.',
+      interpretation:'Vertrauenssignale fehlen, Tarifinhalte sind veraltet und Core Web Vitals liegen im kritischen Bereich.',
       probleme:[
-        {label:'Fehlende Expertise-Nachweise',explanation:'Kein Autor sichtbar – Kaufentscheidungsseite ohne Vertrauenssignal.'},
-        {label:'Veraltete Tarifdaten',explanation:'Preise aus 2023 führen Nutzer zu falschen Entscheidungen.'},
-        {label:'Core Web Vitals kritisch',explanation:'LCP, CLS und TBT rot – Ranking und Nutzererfahrung beeinträchtigt.'},
+        {label:'Keine Autorenschaft erkennbar',explanation:'Nutzer finden keine Person, der sie die Informationen zuordnen können.'},
+        {label:'Tarifdaten nicht aktuell',explanation:'Veraltete Preise erhöhen das Risiko falscher Kaufentscheidungen.'},
+        {label:'Core Web Vitals im roten Bereich',explanation:'Ladezeit und Layout-Stabilität beeinträchtigen Ranking und Nutzererfahrung.'},
       ],
       schritte:[
-        'Autorenprofil mit redaktioneller Verantwortung ergänzen',
-        'Automatisierten Preis-Sync oder wöchentlichen Review einrichten',
-        'Bilder in WebP, Lazy Loading und JS-Defer aktivieren',
+        'Autorenprofil mit Name und Qualifikation ergänzen',
+        'Tarifdaten-Review-Prozess wöchentlich einrichten',
+        'Bilder in WebP konvertieren und Lazy Loading aktivieren',
       ],
     });
     return;
@@ -1287,27 +1287,32 @@ async function generateExecSummary(){
     const verdict=(r.finding||'').split('|').pop().replace(/^Bewertung:\s*/,'').trim();
     return`- ${c.name}: ${verdict}${r.improvement?' → '+r.improvement:''}`;
   }).join('\n');
-  const sys=`Du bist ein UX-Writer und SEO-Experte. Erstelle eine hochwertige Executive Summary für die vorliegende Website-Analyse.
+  const sys=`Du bist ein UX-Writer und SEO-Experte und erstellst eine Executive Summary für ein Website-Analyse-Dashboard.
 Antworte AUSSCHLIESSLICH in folgendem Format – keine Einleitung, kein Abschlusstext:
 
 Gesamtbewertung:
-[X / 100 – verbale Einordnung]
-[1 kurzer Satz, der konkrete Schwächen benennt – max. 1 Zeile]
+[X / 100 – Einordnung]
+[genau 1 kurzer Satz: benennt 2–3 wichtigste Problemfelder, keine generischen Aussagen]
 
 Hauptprobleme:
-✖ [Problembezeichnung, max. 12 Wörter]
-→ [Erklärung, max. 12 Wörter]
-✖ [Problembezeichnung, max. 12 Wörter]
-→ [Erklärung, max. 12 Wörter]
-✖ [Problembezeichnung, max. 12 Wörter]
-→ [Erklärung, max. 12 Wörter]
+✖ [Problem-Titel, max. 10–12 Wörter]
+→ [Ursache ODER Auswirkung, max. 10–12 Wörter, kein „–“ im Satz]
+✖ [Problem-Titel, max. 10–12 Wörter]
+→ [Ursache ODER Auswirkung, max. 10–12 Wörter, kein „–“ im Satz]
+✖ [Problem-Titel, max. 10–12 Wörter]
+→ [Ursache ODER Auswirkung, max. 10–12 Wörter, kein „–“ im Satz]
 
 Empfohlene nächste Schritte:
-1. [Konkrete Maßnahme, max. 12 Wörter, sofort umsetzbar]
-2. [Konkrete Maßnahme, max. 12 Wörter, sofort umsetzbar]
-3. [Konkrete Maßnahme, max. 12 Wörter, sofort umsetzbar]
+1. [konkrete Aktion, max. 8–10 Wörter, sofort umsetzbar]
+2. [konkrete Aktion, max. 8–10 Wörter, sofort umsetzbar]
+3. [konkrete Aktion, max. 8–10 Wörter, sofort umsetzbar]
 
-Regeln: Genau 3 Probleme (je ✖-Zeile + →-Zeile), genau 3 Maßnahmen. Keine langen Absätze. Klare, nüchterne Sprache. Keine Wiederholung von Zahlen oder KPI-Daten. Fokus auf Handlungsfähigkeit.`;
+Global-Regeln:
+- Genau 3 Probleme (je ✖-Zeile + →-Zeile), genau 3 Maßnahmen
+- Kein Score oder KPI-Wert im Fließtext
+- Kein gemischter Schreibstil, keine komplexen Satzstrukturen
+- Kein einzelner Punkt mit mehreren kombinierten Problemen
+- Konsistente sprachliche Struktur über alle Punkte`;
   const msg=`URL: ${currentUrl}\nScore: ${score} / 100 – ${level}\nYMYL: ${ymylResult||'none'}\n\nProbleme (rot, nach Gewicht):\n${fmtCrit(reds)}\n\nVerbesserungspotenziale (amber):\n${fmtCrit(ambers)}\n\nPositive Aspekte:\n${greens.slice(0,4).map(r=>(CRITERIA.find(x=>x.id===r.id)||{}).name||r.id).join(', ')}`;
   try{
     const text=await callApi([{role:'user',content:msg}],sys,700);
