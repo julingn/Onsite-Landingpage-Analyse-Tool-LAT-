@@ -85,18 +85,13 @@ button{font-family:inherit}
 .sidebar-footer a{color:var(--text3);font-size:11px;transition:color .12s}
 .sidebar-footer a:hover{color:var(--red)}
 .main-content{margin-left:220px;flex:1;min-width:0}
-.container{max-width:960px;margin:0 auto;padding:96px 32px 48px}
+.container{max-width:960px;margin:0 auto;padding:32px 32px 48px}
 .tool-panel{display:none}
 .tool-panel.active{display:block}
 .section-divider{display:flex;align-items:center;gap:12px;margin:28px 0 16px}
 .section-divider-line{flex:1;height:1px;background:var(--border)}
 .section-divider-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);white-space:nowrap}
-.top-bar{
-  position:fixed;top:0;left:220px;right:0;z-index:99;
-  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);
-  height:64px;padding:0 32px;display:flex;align-items:center;gap:12px;
-}
+.input-row{display:flex;gap:10px;align-items:center;margin:0 0 4px}
 .url-input{
   flex:1;height:42px;padding:0 14px;border:1px solid var(--border2);border-radius:var(--radius);
   background:var(--bg3);font-family:'Geist Mono','Courier New',monospace;font-size:13px;
@@ -117,11 +112,14 @@ button{font-family:inherit}
 .btn-start:active{transform:translateY(0);box-shadow:var(--shadow-sm)}
 .btn-start:focus-visible{outline:3px solid var(--accent-border);outline-offset:2px}
 .btn-start:disabled{background:var(--bg4);color:var(--text3);box-shadow:none;transform:none;cursor:not-allowed}
-.html-area-wrap{
-  display:none;position:fixed;left:220px;right:0;z-index:98;
-  top:64px;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 32px;
-}
-.html-area-wrap.visible{display:block}
+/* Log Collapse */
+.log-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:8px}
+.log-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;cursor:pointer;background:var(--bg3);user-select:none;transition:background .1s}
+.log-header:hover{background:var(--bg4)}
+.log-header .log-chevron{transition:transform .2s;color:var(--text3);flex-shrink:0}
+.log-wrap.collapsed .log-header .log-chevron{transform:rotate(-90deg)}
+.log-wrap.collapsed .log-box{display:none}
+.log-wrap .log-box{border:none;border-top:1px solid var(--border);border-radius:0;margin-top:0}
 .html-textarea{
   width:100%;height:120px;padding:10px 14px;border:1px solid var(--border2);border-radius:var(--radius);
   background:var(--bg3);font-family:'Geist Mono','Courier New',monospace;font-size:12px;
@@ -371,8 +369,6 @@ button{font-family:inherit}
 @media(max-width:768px){
   .sidebar{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border)}
   .main-content{margin-left:0}
-  .top-bar{left:0}
-  .html-area-wrap{left:0}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .skeleton-stats{grid-template-columns:repeat(2,1fr)}
   .cluster-overview{grid-template-columns:repeat(2,1fr)}
@@ -409,20 +405,6 @@ button{font-family:inherit}
   </div>
 </aside>
 <div class="main-content">
-<div class="top-bar">
-  <input type="text" id="url-input" class="url-input" placeholder="https://www.beispiel.de/seite" autocomplete="off" spellcheck="false">
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="mode-url" onclick="setMode('url')">URL</button>
-    <button class="mode-btn" id="mode-html" onclick="setMode('html')">HTML einfügen</button>
-  </div>
-  <button class="btn-start" id="btn-start" onclick="startAnalysis()">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-    Analyse starten
-  </button>
-</div>
-<div class="html-area-wrap" id="html-area-wrap">
-  <textarea id="html-textarea" class="html-textarea" placeholder="HTML-Quellcode hier einfügen…"></textarea>
-</div>
 <div class="container">
 <div class="tool-panel active" id="panel-sqeg">
   <div class="input-card">
@@ -434,6 +416,22 @@ button{font-family:inherit}
         <div class="card-title">SQEG Analyzer</div>
         <div class="card-sub">Google Search Quality Evaluator Guidelines · Nov 2025</div>
       </div>
+      <div class="card-actions">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="mode-url" onclick="setMode('url')">URL</button>
+          <button class="mode-btn" id="mode-html" onclick="setMode('html')">HTML</button>
+        </div>
+      </div>
+    </div>
+    <div class="input-row">
+      <input type="text" id="url-input" class="url-input" placeholder="https://www.beispiel.de/seite" autocomplete="off" spellcheck="false">
+      <button class="btn-start" id="btn-start" onclick="startAnalysis()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Analyse starten
+      </button>
+    </div>
+    <div id="html-textarea-wrap" style="display:none;margin-top:10px">
+      <textarea id="html-textarea" class="html-textarea" placeholder="HTML-Quellcode hier einfügen…"></textarea>
     </div>
     <div id="url-display" class="url-display"></div>
     <button class="context-toggle" onclick="toggleContext()">
@@ -458,19 +456,22 @@ button{font-family:inherit}
 
   <div id="progress-section" style="display:none">
     <div class="input-card">
-      <div class="progress-header">
-        <span class="progress-label" id="progress-label">Analyse läuft…</span>
-        <span style="display:flex;align-items:center;gap:12px">
-          <span id="progress-timer" style="font-size:11px;color:var(--text3);font-family:'Geist Mono','Courier New',monospace"></span>
-          <span class="progress-pct" id="progress-pct">0%</span>
-        </span>
-      </div>
       <div id="progress-bar-wrap"><div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div></div>
-      <div id="loader-wrap"><div class="loader-dots">
+      <div id="loader-wrap" style="margin-top:10px"><div class="loader-dots">
         <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
       </div></div>
       <div class="status-msg" id="status-msg">Initialisierung…</div>
-      <div class="log-box" id="log-box"></div>
+      <div class="log-wrap" id="log-wrap">
+        <div class="log-header" onclick="toggleLog()">
+          <span class="progress-label" id="progress-label">Analyse-Log</span>
+          <span style="display:flex;align-items:center;gap:10px">
+            <span id="progress-timer" style="font-size:11px;color:var(--text3);font-family:'Geist Mono','Courier New',monospace"></span>
+            <span class="progress-pct" id="progress-pct">0%</span>
+            <svg class="log-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </div>
+        <div class="log-box" id="log-box"></div>
+      </div>
     </div>
     <!-- Skeleton während Analyse -->
     <div id="skeleton-wrap" style="display:none">
@@ -639,8 +640,9 @@ function setMode(mode){
   currentMode=mode;
   document.getElementById('mode-url').classList.toggle('active',mode==='url');
   document.getElementById('mode-html').classList.toggle('active',mode==='html');
-  document.getElementById('html-area-wrap').classList.toggle('visible',mode==='html');
+  document.getElementById('html-textarea-wrap').style.display=mode==='html'?'block':'none';
 }
+function toggleLog(){document.getElementById('log-wrap').classList.toggle('collapsed');}
 function toggleContext(){document.getElementById('context-fields').classList.toggle('visible')}
 
 // === CRITERIA (SQEG Sept 2025 — 42 Kriterien, 8 Cluster) ===
@@ -775,6 +777,7 @@ async function startAnalysis(){
   document.getElementById('progress-pct').style.display='';
   document.getElementById('results-section').style.display='none';
   document.getElementById('skeleton-wrap').style.display='block';
+  document.getElementById('log-wrap').classList.remove('collapsed');
   document.getElementById('log-box').innerHTML='';
   analysisResults=[];pqResults=[];e8Result=null;ymylResult=null;
   gscData=null;serpData=null;backlinkData=null;psiData=null;
@@ -877,9 +880,9 @@ async function startAnalysis(){
       document.getElementById('progress-bar-wrap').style.display='none';
       document.getElementById('loader-wrap').style.display='none';
       document.getElementById('status-msg').style.display='none';
-      document.getElementById('progress-label').textContent='Analyse-Log';
-      document.getElementById('progress-pct').style.display='none';
+      document.getElementById('progress-label').textContent='Analyse abgeschlossen';
       document.getElementById('results-section').style.display='block';
+      document.getElementById('log-wrap').classList.add('collapsed');
     },600);
   }catch(err){
     if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
