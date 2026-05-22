@@ -1276,8 +1276,15 @@ async function runMiniCall(ids,htmlSnippet,url,ymyl,keyword,idx,ctx={}){
   const sys=`Du bist ein Google Search Quality Evaluator (SQEG September 2025).\nAntworte AUSSCHLIESSLICH als JSON-Array. Kein Text davor oder danach.\nFormat je Objekt: {"id":"1.1","category":"1: Seitenzweck & Seitentyp","criterion":"Name","sqeg_ref":"Sek. X.X","status":"green|amber|red","finding":"Beleg: [Signal aus HTML] | Regel: [WENN-Bedingung] | Bewertung: [Urteil]","improvement":"[konkreter Vorschlag, leer wenn green]","confidence":80}`;
   const contextParts=(ctx.ctxBlock||'')+(ctx.serpBlock||'')+(ctx.backlinkBlock||'')+(ctx.psiBlock||'')+(ctx.schemaBlock||'');
   const msg=`URL: ${url}\nSeitentext (vollst\u00e4ndig):\n${htmlSnippet}${keyword?'\nKeyword: '+keyword:''}\n${ymylHint}${contextParts}\n\nZu bewertende Kriterien:\n${criteriaList}`;
-  const text=await callApi([{role:'user',content:msg}],sys,2000);
-  const m=text.match(/\[[\s\S]*\]/);
+  const text=await callApi([{role:'user',content:msg}],sys,2500);
+  let m=text.match(/\[[\s\S]*\]/);
+  if(!m){
+    // Fallback: JSON wurde evtl. abgeschnitten — versuche offenes Array zu schließen
+    const partial=text.match(/\[[\s\S]+/);
+    if(partial){
+      try{m=[partial[0].replace(/,?\s*\{[^}]*$/, '')+']'];JSON.parse(m[0]);}catch(e){m=null;}
+    }
+  }
   if(!m)throw new Error('Kein JSON-Array in Call '+(idx+1));
   return JSON.parse(m[0]);
 }

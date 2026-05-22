@@ -23,6 +23,8 @@ if (empty($_SESSION['logged_in'])) {
     echo json_encode(['error' => ['type' => 'unauthorized', 'message' => 'Nicht authentifiziert.']]);
     exit;
 }
+// Lock sofort freigeben — API-Call kann Sekunden dauern, kein Session-Write nötig
+session_write_close();
 
 require_once __DIR__ . '/config.php';
 
